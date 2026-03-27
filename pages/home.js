@@ -1,16 +1,15 @@
 import { fetchWithAuth } from "../js/api.js";
-import { API_URL } from "../js/api.js";
 
 // cách tạo hàm get gì đó vd:
 const getCategory = async () => {
-    const res = await fetchWithAuth(`${API_URL}/categories`);
+    const res = await fetchWithAuth(`categories`);
 
     return await res;
 };
 
 // cách tạo hàm create gì đó vd:
 const createCategory = async (payload) => {
-    const res = await fetchWithAuth(`${API_URL}/categories`, {
+    const res = await fetchWithAuth(`categories`, {
         method: "POST",
         body: JSON.stringify(payload),
     });
@@ -20,7 +19,7 @@ const createCategory = async (payload) => {
 
 // cách update hàm gì đó vd:
 const updateCategory = async (id, newPayload) => {
-    const res = await fetchWithAuth(`${API_URL}/categories/${id}`, {
+    const res = await fetchWithAuth(`categories/${id}`, {
         method: "PUT",
         body: JSON.stringify(newPayload),
     });
@@ -30,7 +29,7 @@ const updateCategory = async (id, newPayload) => {
 
 // cách delete hàm gì đó vd:
 const deleteCategory = async (id) => {
-    const res = await fetchWithAuth(`${API_URL}/categories/${id}`, {
+    const res = await fetchWithAuth(`categories/${id}`, {
         method: "DELETE",
     });
 

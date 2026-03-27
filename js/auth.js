@@ -1,4 +1,4 @@
-import { API_URL } from "./api.js";
+const API_URL = "https://k305jhbh09.execute-api.ap-southeast-1.amazonaws.com";
 
 export async function login(email, password) {
     const response = await fetch(`${API_URL}/auth/signin`, {
