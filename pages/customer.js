@@ -1,9 +1,9 @@
+import { fetchData } from "../apis/api.js";
 import { commonTable } from "../components/table.js";
-import { getCustomer } from "../js/customerApi.js";
 
 export async function customer() {
-  const customerData = await getCustomer();
 
+    const getCustomer = await fetchData.get("customers");
   function getRankColor(rank) {
     switch (rank?.toUpperCase()) {
       case "GOLD":
@@ -54,34 +54,36 @@ export async function customer() {
                 </div>
               </div>
             `;
-      },
-    },
-    {
-      title: "Liên hệ",
-      dataIndex: "email",
-      render: (_, row) => `${row.email}<br><small>${row.phone}</small>`,
-    },
-    {
-      title: "Hạng",
-      dataIndex: "rank",
-      render: (_, row) =>
-        `<span class="tier ${getRankColor(row.rank)}">${getRankVN(row.rank)}</span>`,
-    },
-    { title: "Địa chỉ", dataIndex: "address" },
-    {
-      title: "Tổng chi tiêu",
-      dataIndex: "totalSpending",
-      render: (value) =>
-        value
-          ? `<strong>${value.toLocaleString("vi-VN")}đ</strong>`
-          : `<em>Chưa có</em>`,
-    },
-    {
-      title: "Thao tác",
-      dataIndex: "id",
-      render: (value) => `
-            <button class="btn-action" title="Lịch sử mua hàng"><i class="fas fa-history"></i></button>
-            <button class="btn-action" title="Sửa"><i class="fas fa-user-edit"></i></button>
+
+            },
+        },
+        {
+            title: "Liên hệ",
+            dataIndex: "email",
+            render: (_, row) => `${row.email}<br><small>${row.phone}</small>`,
+        },
+        {
+            title: "Hạng",
+            dataIndex: "rank",
+            render: (_, row) =>
+                `<span class="tier ${getRankColor(row.rank)}">${getRankVN(row.rank)}</span>`,
+        },
+        { title: "Địa chỉ", dataIndex: "address" },
+        {
+            title: "Tổng chi tiêu",
+            dataIndex: "totalSpending",
+            render: (value) =>
+                value
+                    ? `<strong>${value.toLocaleString("vi-VN")}đ</strong>`
+                    : `<em>Chưa có</em>`,
+        },
+        {
+            title: "Thao tác",
+            dataIndex: "id",
+            render: (value) => `
+            <button class="btn-icon edit btn-action" title="Sửa"><i class="fas fa-edit"></i></button>
+            <button class="btn-icon delete btn-action" itle="Xóa"><i class="fas fa-trash"></i></button>
+
           `,
     },
   ];
@@ -124,7 +126,8 @@ export async function customer() {
             </section>
         `;
 
-  const tableWrapper = container.querySelector(".table-wrapper");
-  commonTable(tableWrapper, columns, customerData);
-  return container;
+
+    const tableWrapper = container.querySelector(".table-wrapper");
+    commonTable(tableWrapper, columns, getCustomer);
+    return container;
 }

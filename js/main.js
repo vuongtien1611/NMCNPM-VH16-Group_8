@@ -5,11 +5,7 @@ import { order } from "../pages/order.js";
 import { customer } from "../pages/customer.js";
 import { createCustomer } from "../pages/create-customer.js";
 import { report } from "../pages/report.js";
-
-import { isTokenExpired } from "./api.js";
-import { refreshAccessToken } from "./auth.js";
-
-
+import { checkAndRefreshToken } from "../apis/auth.js";
 
 const routes = {
     "/": home,
@@ -22,29 +18,16 @@ const routes = {
 const app = document.querySelector("#app");
 
 const render = async () => {
-    // check token
-    let token = localStorage.getItem("access_token");
-
-    if (!token || isTokenExpired(token)) {
-        console.log("Token expired or about to expire. Refreshing...");
-
-        const newToken = await refreshAccessToken();
-
-        // refresh token hết hạn cho out luôn
-        if (!newToken) {
-            window.location.href = "login.html";
-            return;
-        }
-    }
+    // check refresh token
+    if (!(await checkAndRefreshToken())) return null;
 
     // sử dụng khi sài live sever
-    const hash = window.location.hash || "/#";
-    const path = hash.replace("#", "") || "/";
+    const path = window.location.hash.replace("#", "") || "/";
 
     // có server
     // const path = window.location.pathname
 
-    const page = routes[path] || "";
+    const page = routes[path] || null;
 
     document.querySelector("#sidebar").innerHTML = sidebar();
 

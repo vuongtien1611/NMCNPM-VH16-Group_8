@@ -1,4 +1,4 @@
-import { login } from "./auth.js";
+import { login } from "../apis/auth.js";
 
 const loginForm = document.querySelector("#loginForm");
 
