@@ -1,9 +1,22 @@
-export function createForm({ formId, fields = [], onSubmit }) {
+export function createForm({
+    formId,
+    fields = [],
+    onSubmit,
+    onCancel = null,
+    initialValues = {}, // ✅ thêm
+}) {
     const form = document.querySelector(formId);
     const state = {};
 
     fields.forEach((field) => {
-        state[field.name] = "";
+        state[field.name] = initialValues[field.name] ?? "";
+    });
+
+    Object.keys(initialValues).forEach((key) => {
+        const input = form.querySelector(`[name="${key}"]`);
+        if (input) {
+            input.value = initialValues[key];
+        }
     });
 
     fields.forEach((field) => {
@@ -66,11 +79,20 @@ export function createForm({ formId, fields = [], onSubmit }) {
 
         if (!validate()) return;
 
-        onSubmit && onSubmit(state);
+        onSubmit && onSubmit({ ...state });
+    });
+
+    form.addEventListener("reset", (e) => {
+        e.preventDefault();
+        onCancel && onCancel();
+        form.reset();
+        fields.forEach((field) => {
+            state[field.name] = initialValues[field.name] ?? "";
+        });
     });
 
     return {
-        getValues: () => state,
+        getValues: () => ({ ...state }),
         setValues: (data) => {
             Object.keys(data).forEach((key) => {
                 const input = form.querySelector(`[name="${key}"]`);
@@ -80,6 +102,5 @@ export function createForm({ formId, fields = [], onSubmit }) {
                 }
             });
         },
-        reset: () => form.reset(),
     };
 }

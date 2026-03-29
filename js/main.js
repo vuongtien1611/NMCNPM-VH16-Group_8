@@ -14,8 +14,40 @@ const routes = {
     "/customers": customer,
     "/reports": report,
     "/customers/create": createCustomer,
+
+    "/customers/edit/:id": createCustomer,
 };
 const app = document.querySelector("#app");
+
+const matchRoute = (path, routes) => {
+    for (const route in routes) {
+        const paramNames = [];
+
+        // chuyển "/customers/edit/:id" → regex
+        const regexPath = route.replace(/:([^/]+)/g, (_, paramName) => {
+            paramNames.push(paramName);
+            return "([^/]+)";
+        });
+
+        const regex = new RegExp(`^${regexPath}$`);
+        const match = path.match(regex);
+
+        if (match) {
+            const params = {};
+
+            paramNames.forEach((name, index) => {
+                params[name] = match[index + 1];
+            });
+
+            return {
+                page: routes[route],
+                params,
+            };
+        }
+    }
+
+    return null;
+}
 
 const render = async () => {
     // check refresh token
@@ -27,20 +59,21 @@ const render = async () => {
     // có server
     // const path = window.location.pathname
 
-    const page = routes[path] || null;
+    const match = matchRoute(path, routes);
 
     document.querySelector("#sidebar").innerHTML = sidebar();
-
     app.innerHTML = "";
 
-    if (typeof page === "function") {
-        const content = await page();
-
+    if (match) {
+        const { page, params } = match;
+        const content = await page(params); 
         if (content instanceof HTMLElement) {
             app.appendChild(content);
         } else {
             app.innerHTML = content;
         }
+    } else {
+        app.innerHTML = "<h2>404 - Not Found</h2>";
     }
 
     bindLinks();

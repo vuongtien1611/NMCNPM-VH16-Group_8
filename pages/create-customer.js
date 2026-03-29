@@ -1,12 +1,21 @@
 import { fetchData } from "../apis/api.js";
 import { createForm } from "../components/form.js";
 
-export function createCustomer() {
+export async function createCustomer(params = {}) {
     const container = document.createElement("div");
-
+    const id = params?.id
+    let initialValues = {};
+    if (id) {
+        try {
+            const res = await fetchData.get('customers');
+            initialValues = res.find(item => item.id == id);
+        } catch (err) {
+            console.error(err);
+        }
+    }
     container.innerHTML = `
         <div class="header-actions">
-            <a href="/customers" class="btn-back">
+            <a href="#/customers" class="btn-back">
                 <i class="fas fa-arrow-left"></i> Quay lại danh sách
             </a>
             <h2>Thêm khách hàng</h2>
@@ -55,6 +64,7 @@ export function createCustomer() {
     setTimeout(() => {
         createForm({
             formId: "#customerForm",
+            initialValues,
             fields: [
                 { name: "name", required: true },
                 {
@@ -69,11 +79,19 @@ export function createCustomer() {
             ],
             onSubmit: async (values) => {
                 try {
-                    const resposonsive = await fetchData.create('customers', values)
+                    let resposonsive
+                    if (id) {
+                        resposonsive = await fetchData.update('customers', {...values, id})
+                    } else {
+                        resposonsive = await fetchData.create('customers', values)
+                    }
+                    if (!resposonsive) return
+                    window.location.hash = '/customers'
                 } catch (error) {
                     console.error(error);
                 }
             },
+            onCancel: () => window.location.hash = '/customers'
         });
     });
 
