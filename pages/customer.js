@@ -1,9 +1,10 @@
 import { fetchData } from "../apis/api.js";
+import { createFilter } from "../components/filter.js";
+import { createSummary } from "../components/summary.js";
 import { commonTable } from "../components/table.js";
 
 export async function customer() {
-    const getCustomer = await fetchData.get("customers");
-
+    const customers = await fetchData.get("customers");
     function getRankColor(rank) {
         switch (rank?.toUpperCase()) {
             case "GOLD":
@@ -11,7 +12,7 @@ export async function customer() {
             case "SILVER":
                 return "silver";
             case "BRONZE":
-                return "#cd7f32";
+                return "bronze";
             default:
                 return "#ccc";
         }
@@ -64,26 +65,45 @@ export async function customer() {
         {
             title: "Hạng",
             dataIndex: "rank",
-            render: (_, row) =>
-                `<span class="tier ${getRankColor(row.rank)}">${getRankVN(row.rank)}</span>`,
+            render: (_, row) => `<span class="tier ${getRankColor(row.rank)}">${getRankVN(row.rank)}</span>`,
         },
         { title: "Địa chỉ", dataIndex: "address" },
         {
             title: "Tổng chi tiêu",
             dataIndex: "totalSpending",
-            render: (value) =>
-                value
-                    ? `<strong>${value.toLocaleString("vi-VN")}đ</strong>`
-                    : `<em>Chưa có</em>`,
+            render: (value) => (value ? `<strong>${value.toLocaleString("vi-VN")}đ</strong>` : `<em>Chưa có</em>`),
         },
         {
             title: "Thao tác",
             dataIndex: "id",
-            render: (value) => `
-            <button class="btn-icon edit btn-action" title="Sửa"><i class="fas fa-edit"></i></button>
-            <button class="btn-icon delete btn-action" itle="Xóa"><i class="fas fa-trash"></i></button>
+            render: (value) => {
+                const fragment = document.createDocumentFragment();
 
-          `,
+                const editBtn = document.createElement("button");
+                editBtn.classList.add("btn-icon", "edit", "btn-action");
+                editBtn.title = "Sửa";
+                editBtn.innerHTML = `<i class="fas fa-edit"></i>`;
+                editBtn.addEventListener("click", () => {
+                    window.location.hash = `/customers/edit/${value}`;
+                });
+
+                // 👉 nút delete
+                const deleteBtn = document.createElement("button");
+                deleteBtn.className = "btn-icon delete btn-action";
+                deleteBtn.title = "Xóa";
+                deleteBtn.innerHTML = `<i class="fas fa-trash"></i>`;
+
+                deleteBtn.addEventListener("click", () => {
+                    const confirmDelete = confirm("Bạn có chắc muốn xóa?");
+                    if (confirmDelete) {
+                        console.log("Delete id:", value);
+                    }
+                });
+                fragment.appendChild(editBtn);
+                fragment.appendChild(deleteBtn);
+                return fragment;
+            },
+
         },
     ];
 
@@ -93,23 +113,11 @@ export async function customer() {
               <div class="search-bar">
                 <input type="text" placeholder="Tìm tên, email hoặc số điện thoại...">
               </div>
-              <button class="btn-add"><i class="fas fa-user-plus"></i> Thêm khách hàng</button>
+              <a href="#/customers/create" class="btn-add"><i class="fas fa-user-plus"></i> Thêm khách hàng</a>
             </header>
       
-            <section class="stats">
-              <div class="card">
-                <h3>Tổng khách hàng</h3>
-                <p>850</p>
-              </div>
-              <div class="card">
-                <h3>Khách hàng mới (Tháng)</h3>
-                <p>42</p>
-              </div>
-              <div class="card">
-                <h3>Tỉ lệ quay lại</h3>
-                <p>65%</p>
-              </div>
-            </section>
+            <div class="stats-wrapper">
+            </div>
       
             <section class="table-container">
               <div class="table-header">
@@ -118,7 +126,7 @@ export async function customer() {
                   <option value="ALL">Hạng: Tất cả</option>
                   <option value="GOLD">Hạng: Vàng</option>
                   <option value="SILVER">Hạng: Bạc</option>
-                  <option value="BRONE">Hạng: Đồng</option>
+                  <option value="BRONZE">Hạng: Đồng</option>
                 </select>
               </div>
               <div class="table-wrapper"></div>
@@ -126,6 +134,50 @@ export async function customer() {
         `;
 
     const tableWrapper = container.querySelector(".table-wrapper");
-    commonTable(tableWrapper, columns, getCustomer);
+    commonTable(tableWrapper, columns, customers);
+
+    const summaryList = [
+        {
+            cardColor: "no-border-left",
+            title: "Tổng khách hàng",
+            value: customers?.length || 0,
+        },
+        {
+            cardColor: "no-border-left",
+            title: "Khách hàng mới",
+            value: customers?.length || 0,
+        },
+        {
+            cardColor: "no-border-left",
+            title: "Tỉ lệ quay lại",
+            value: `${customers?.length || 0}%`,
+        },
+    ];
+    const summaryEl = createSummary(summaryList);
+    const statsWrapper = container.querySelector(".stats-wrapper");
+    statsWrapper.appendChild(summaryEl);
+
+    const searchInput = container.querySelector(".search-bar input");
+    const select = container.querySelector("select");
+
+    createFilter({
+        data: customers,
+
+        searchFields: ["name", "email", "phone"],
+
+        searchEl: searchInput,
+        selectEl: select,
+
+        getFilterValue: (item, value) => {
+            if (value === "ALL") return true;
+            return item.rank?.toUpperCase() === value;
+        },
+
+        render: (filteredData) => {
+            tableWrapper.innerHTML = "";
+            commonTable(tableWrapper, columns, filteredData);
+        },
+    });
+
     return container;
 }

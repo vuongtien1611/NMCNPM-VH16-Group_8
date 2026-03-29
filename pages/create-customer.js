@@ -1,10 +1,26 @@
-export function createCustomer() {
+import { fetchData } from "../apis/api.js";
+import { createForm } from "../components/form.js";
+
+export async function createCustomer(params = {}) {
     const container = document.createElement("div");
+    const id = params?.id
+    let initialValues = {};
+    if (id) {
+        try {
+            const res = await fetchData.get('customers');
+            initialValues = res.find(item => item.id == id);
+        } catch (err) {
+            console.error(err);
+        }
+    }
     container.innerHTML = `
         <div class="header-actions">
-            <a href="/customers" class="btn-back"><i class="fas fa-arrow-left"></i> Quay lại danh sách</a>
+            <a href="#/customers" class="btn-back">
+                <i class="fas fa-arrow-left"></i> Quay lại danh sách
+            </a>
             <h2>Thêm khách hàng</h2>
         </div>
+
         <form id="customerForm">
             <div class="card">
                 <div class="form-group">
@@ -30,10 +46,10 @@ export function createCustomer() {
                 <div class="form-group">
                     <label>Hạng khách hàng</label>
                     <select name="rank">
-                    <option value="">Chọn hạng</option>
-                    <option value="GOLD">VÀNG</option>
-                    <option value="SILVER">BẠC</option>
-                    <option value="BRONZE">ĐỒNG</option>
+                        <option value="">Chọn hạng</option>
+                        <option value="GOLD">VÀNG</option>
+                        <option value="SILVER">BẠC</option>
+                        <option value="BRONZE">ĐỒNG</option>
                     </select>
                 </div>
             </div>
@@ -44,5 +60,40 @@ export function createCustomer() {
             </div>
         </form>
     `;
+
+    setTimeout(() => {
+        createForm({
+            formId: "#customerForm",
+            initialValues,
+            fields: [
+                { name: "name", required: true },
+                {
+                    name: "email",
+                    required: true,
+                    pattern: "^\\S+@\\S+\\.\\S+$",
+                    message: "Email không hợp lệ",
+                },
+                { name: "phone" },
+                { name: "address" },
+                { name: "rank", required: true },
+            ],
+            onSubmit: async (values) => {
+                try {
+                    let resposonsive
+                    if (id) {
+                        resposonsive = await fetchData.update('customers', {...values, id})
+                    } else {
+                        resposonsive = await fetchData.create('customers', values)
+                    }
+                    if (!resposonsive) return
+                    window.location.hash = '/customers'
+                } catch (error) {
+                    console.error(error);
+                }
+            },
+            onCancel: () => window.location.hash = '/customers'
+        });
+    });
+
     return container;
 }

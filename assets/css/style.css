@@ -321,6 +321,9 @@ small {
   cursor: pointer;
   font-weight: 600;
 }
+.btn-action + .btn-action {
+  margin-left: 8px;
+}
 
 /* Form Layout */
 .product-grid {
@@ -739,4 +742,10 @@ th {
 .btn-cancel {
   background: #eee;
   color: #7f8c8d;
+}
+
+.form-error {
+  color: red;
+  font-size: 0.9rem;
+  margin-top: 4px;
 }

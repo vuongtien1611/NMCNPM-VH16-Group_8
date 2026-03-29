@@ -14,6 +14,7 @@ const routes = {
     "/customers": customer,
     "/reports": report,
     "/customers/create": createCustomer,
+    "/customers/edit/:id": createCustomer,
 };
 const app = document.querySelector("#app");
 let authCheckTimeout = null;
@@ -23,7 +24,7 @@ async function startAutoRefresh() {
     if (authCheckTimeout) clearTimeout(authCheckTimeout);
 
     const token = localStorage.getItem("access_token");
-
+  
     if (token) {
         try {
             // Đợi hàm check hoàn tất
@@ -32,12 +33,43 @@ async function startAutoRefresh() {
             console.error("Lỗi khi auto refresh:", error);
         }
     }
-
-    // check lại sau 9 phút.
+  
+    // auto check lại sau 1 phút để khi hết gần hết hạn accessToken gọi cái mới về
     authCheckTimeout = setTimeout(startAutoRefresh, 60 * 1000);
 }
 
 startAutoRefresh();
+
+const matchRoute = (path, routes) => {
+    for (const route in routes) {
+        const paramNames = [];
+
+        // chuyển "/customers/edit/:id" → regex
+        const regexPath = route.replace(/:([^/]+)/g, (_, paramName) => {
+            paramNames.push(paramName);
+            return "([^/]+)";
+        });
+
+        const regex = new RegExp(`^${regexPath}$`);
+        const match = path.match(regex);
+
+        if (match) {
+            const params = {};
+
+            paramNames.forEach((name, index) => {
+                params[name] = match[index + 1];
+            });
+
+            return {
+                page: routes[route],
+                params,
+            };
+        }
+    }
+
+    return null;
+}
+
 
 const render = async () => {
     try {
@@ -53,21 +85,22 @@ const render = async () => {
         // có server
         // const path = window.location.pathname
 
-        const page = routes[path] || null;
+        const match = matchRoute(path, routes);
         document.querySelector("#sidebar").innerHTML = sidebar();
-
         app.innerHTML = "";
 
-        if (typeof page === "function") {
-            const content = await page();
-
+        if (match) {
+            const { page, params } = match;
+            const content = await page(params); 
             if (content instanceof HTMLElement) {
                 app.appendChild(content);
             } else {
                 app.innerHTML = content;
             }
+        } else {
+            app.innerHTML = "<h2>404 - Not Found</h2>";
         }
-
+    
         bindLinks();
     } catch (error) {
         console.error("Lỗi hệ thống:", error);
