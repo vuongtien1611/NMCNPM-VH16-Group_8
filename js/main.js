@@ -24,7 +24,7 @@ async function startAutoRefresh() {
     if (authCheckTimeout) clearTimeout(authCheckTimeout);
 
     const token = localStorage.getItem("access_token");
-  
+
     if (token) {
         try {
             // Đợi hàm check hoàn tất
@@ -33,7 +33,7 @@ async function startAutoRefresh() {
             console.error("Lỗi khi auto refresh:", error);
         }
     }
-  
+
     // auto check lại sau 1 phút để khi hết gần hết hạn accessToken gọi cái mới về
     authCheckTimeout = setTimeout(startAutoRefresh, 60 * 1000);
 }
@@ -68,8 +68,13 @@ const matchRoute = (path, routes) => {
     }
 
     return null;
-}
+};
 
+const getPath = () => {
+    const hash = window.location.hash.replace("#", "");
+    if (!hash) return "/";
+    return hash.startsWith("/") ? hash : `/${hash}`;
+};
 
 const render = async () => {
     try {
@@ -80,18 +85,17 @@ const render = async () => {
         }
 
         // sử dụng khi sài live sever
-        const path = window.location.hash.replace("#", "") || "/";
-
+        const path = getPath();
         // có server
         // const path = window.location.pathname
 
         const match = matchRoute(path, routes);
-        document.querySelector("#sidebar").innerHTML = sidebar();
+        document.querySelector("#sidebar").innerHTML = sidebar(path);
         app.innerHTML = "";
 
         if (match) {
             const { page, params } = match;
-            const content = await page(params); 
+            const content = await page(params);
             if (content instanceof HTMLElement) {
                 app.appendChild(content);
             } else {
@@ -100,7 +104,7 @@ const render = async () => {
         } else {
             app.innerHTML = "<h2>404 - Not Found</h2>";
         }
-    
+
         bindLinks();
     } catch (error) {
         console.error("Lỗi hệ thống:", error);

@@ -26,16 +26,26 @@ const pageTitles = [
     },
 ];
 
-export function sidebar(cuurentPath) {
-    cuurentPath = window.location.hash || "/";
+export function sidebar(currentPath) {
+    const cleanCurrentPath = currentPath.startsWith("#")
+        ? currentPath.replace("#", "")
+        : currentPath;
 
     return `
             <h2 class="">ShopAdmin</h2>
             <ul>
                 ${pageTitles
                     .map((item) => {
+                        const cleanTargetPath = item.path.replace("#", "");
+
                         // Check path
-                        const isActive = cuurentPath === item.path;
+                        let isActive = false;
+                        if (cleanTargetPath === "/") {
+                            isActive = cleanCurrentPath === "/";
+                        } else {
+                            isActive =
+                                cleanCurrentPath.startsWith(cleanTargetPath);
+                        }
 
                         return `
                             <li class=${isActive ? "active" : ""}>

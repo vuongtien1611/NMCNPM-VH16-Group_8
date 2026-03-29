@@ -8,12 +8,17 @@ async function fetchWithAuth(endpoint, method = "GET", payload = null) {
 
     const token = localStorage.getItem("access_token");
 
+    const headers = {
+        "Content-Type": "application/json",
+    };
+
+    if (token) {
+        headers["Authorization"] = `Bearer ${token}`;
+    }
+
     const options = {
         method: method,
-        headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-        },
+        headers: headers,
     };
 
     if (method !== "GET" && payload) {
