@@ -6,7 +6,7 @@ import { commonTable } from "../components/table.js";
 export async function product() {
     const container = document.createElement("div");
     container.innerHTML = `
-        <header>
+        <header class="header">
             <div class="search-bar">
                 <input type="text" placeholder="Tìm sản phẩm...">
             </div>
@@ -74,13 +74,13 @@ export async function product() {
                     const fragment = document.createDocumentFragment();
 
                     const editBtn = document.createElement("button");
-                    editBtn.className = "btn-icon edit btn-action";
+                    editBtn.className = "btn-action btn-icon edit ";
                     editBtn.innerHTML = `<i class="fas fa-edit"></i>`;
                     editBtn.onclick = () =>
                         (window.location.hash = `/products/edit/${value}`);
 
                     const deleteBtn = document.createElement("button");
-                    deleteBtn.className = "btn-icon delete btn-action";
+                    deleteBtn.className = "btn-action btn-icon delete ";
                     deleteBtn.innerHTML = `<i class="fas fa-trash"></i>`;
                     deleteBtn.addEventListener("click", async () => {
                         if (confirm("Bạn có chắc muốn xóa?")) {

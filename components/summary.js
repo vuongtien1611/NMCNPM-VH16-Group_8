@@ -17,7 +17,6 @@ const summaryListFake = [
         title: "Doanh Thu",
         value: 20,
         valueColor: null,
-       
     },
     {
         cardColor: "red",
@@ -25,60 +24,54 @@ const summaryListFake = [
         value: "1 trieu",
         valueColor: "red",
         trend: {
-            trendValue: 'string',
+            trendValue: "string",
             isTrendUp: true,
-        }
-    }
-
+        },
+    },
 ];
 
+export function createSummary(summaryList = summaryListFake) {
+    const sumarySection = document.createElement("section");
+    sumarySection.classList.add("stats");
 
-export function createSummary(summaryList = summaryListFake){
+    summaryList.forEach((summaryItem) => {
+        const card = document.createElement("div");
+        card.classList.add("card");
+        if (summaryItem.cardColor) card.classList.add(summaryItem.cardColor);
 
-    const sumarySection = document.createElement('section');
-    sumarySection.classList.add('stats');
-
-
-    summaryList.forEach( summaryItem=> {
-
-        const card = document.createElement('div');
-        card.classList.add('card');
-        if(summaryItem.cardColor) card.classList.add(summaryItem.cardColor);
-        
-        const title = document.createElement('h3');
+        const title = document.createElement("h3");
 
         title.innerText = summaryItem.title;
-        
-        const value = document.createElement('p');
+
+        const value = document.createElement("p");
         value.innerText = summaryItem.value;
-        if(summaryItem.valueColor) value.classList.add(summaryItem.valueColor);
+        if (summaryItem.valueColor) value.classList.add(summaryItem.valueColor);
 
-        card.append(title,value);
+        card.append(title, value);
 
-        if(summaryItem.trend){
-            const trend = document.createElement('div');
-            trend.classList.add('trend');
+        if (summaryItem.trend) {
+            const trend = document.createElement("div");
+            trend.classList.add("trend");
 
-            const icon = document.createElement('i');
-            icon.classList.add('fas');
+            const icon = document.createElement("i");
+            icon.classList.add("fas");
 
-            if(summaryItem.trend.isTrendUp){
-                trend.classList.add('up');
-                icon.classList.add('fa-arrow-up');
+            if (summaryItem.trend.isTrendUp) {
+                trend.classList.add("up");
+                icon.classList.add("fa-arrow-up");
+            } else {
+                trend.classList.add("down");
+                icon.classList.add("fa-arrow-down");
             }
-            else{
-                trend.classList.add('down');
-                icon.classList.add('fa-arrow-down');
-            }
-            const trenValue = document.createElement('span');
+            const trenValue = document.createElement("span");
             trenValue.innerText = summaryItem.trend.trendValue;
 
-            trend.append(icon,trenValue);
+            trend.append(icon, trenValue);
             card.appendChild(trend);
-        } 
+        }
 
         sumarySection.appendChild(card);
     });
-        
+
     return sumarySection;
 }

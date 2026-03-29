@@ -33,7 +33,7 @@ export async function customer() {
 
     const container = document.createElement("div");
     container.innerHTML = `
-            <header>
+            <header class="header">
               <div class="search-bar">
                 <input type="text" placeholder="Tìm tên, email hoặc số điện thoại...">
               </div>

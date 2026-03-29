@@ -31,9 +31,9 @@ export async function createProduct(params = {}) {
             </a>
             <h2>${id ? `Chỉnh sửa: ${initialValues.name}` : "Thêm sản phẩm"}</h2>
         </div>
-
+ 
         <form id="productForm">        
-            <div class="product-grid">
+            <div class="form" >
                 <div class="left-col">
                 <div class="card">
                     <h3>Thông tin chung</h3>
