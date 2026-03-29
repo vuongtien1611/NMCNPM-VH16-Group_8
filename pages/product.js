@@ -1,98 +1,139 @@
+import { fetchData } from "../apis/api.js";
+import { createFilter } from "../components/filter.js";
+import { createSummary } from "../components/summary.js";
 import { commonTable } from "../components/table.js";
 
 export async function product() {
-    const productDataMock = [
-        {
-            id: 1,
-            category: "Điện thoại",
-            imageUrl: "https://via.placeholder.com/80x80?text=iPhone+15",
-            name: "iPhone 15 Pro Max",
-            sku: "IP15PM-BLUE-256",
-            price: 32500000,
-            remaining: 45,
-        },
-        {
-            id: 2,
-            category: "Điện thoại",
-            imageUrl: "https://via.placeholder.com/80x80?text=Samsung+S23",
-            name: "Samsung Galaxy S23 Ultra",
-            sku: "S23U-BLACK-512",
-            price: 30990000,
-            remaining: 30,
-        },
-        {
-            id: 3,
-            category: "Máy tính bảng",
-            imageUrl: "https://via.placeholder.com/80x80?text=iPad+Pro",
-            name: 'iPad Pro 12.9" 2023',
-            sku: "IPADPRO-12-256",
-            price: 27990000,
-            remaining: 20,
-        },
-        {
-            id: 4,
-            category: "Phụ kiện",
-            imageUrl: "https://via.placeholder.com/80x80?text=AirPods+Pro",
-            name: "AirPods Pro 2",
-            sku: "AIRP2-WHITE",
-            price: 6490000,
-            remaining: 100,
-        },
-        {
-            id: 5,
-            category: "Phụ kiện",
-            imageUrl: "https://via.placeholder.com/80x80?text=Apple+Watch",
-            name: "Apple Watch Series 9",
-            sku: "AWATCH9-44MM",
-            price: 12990000,
-            remaining: 50,
-        },
-    ];
-
-    const columns = [
-        {
-            title: "Hình",
-            dataIndex: "imageUrl",
-            render: (url) => `<img src="${url}" alt="Ảnh sản phẩm" style="width:60px; height:60px; object-fit:cover; border-radius:6px;">`,
-        },
-        {
-            title: "Thông tin sản phẩm",
-            dataIndex: "name",
-            render: (_, row) => `
-            <div>
-              <strong>${row.name}</strong><br>
-              <small>SKU: ${row.sku}</small>
-            </div>
-          `,
-        },
-        {
-            title: "Danh mục",
-            dataIndex: "category",
-            render: (value) => value || "Chưa phân loại",
-        },
-        {
-            title: "Giá bán",
-            dataIndex: "price",
-            render: (value) => `<strong>${value.toLocaleString("vi-VN")}đ</strong>`,
-        },
-        {
-            title: "Tồn kho",
-            dataIndex: "remaining",
-        },
-        {
-            title: "Thao tác",
-            dataIndex: "id",
-            render: (id) => `
-            <button class="btn-action" title="Sửa"><i class="fas fa-edit"></i></button>
-            <button class="btn-action" title="Xóa"><i class="fas fa-trash"></i></button>
-          `,
-        },
-    ];
     const container = document.createElement("div");
     container.innerHTML = `
-              <div class="table-wrapper"></div>
-    `
+        <header>
+            <div class="search-bar">
+                <input type="text" placeholder="Tìm sản phẩm...">
+            </div>
+            <a href="#/products/create" class="btn-add"><i class="fas fa-plus"></i> Thêm sản phẩm</a>
+        </header>
+        <div class="stats-wrapper"></div>
+        <section class="table-container">
+            <div class="table-header">
+                <h3>Danh sách sản phẩm</h3>
+                <div>
+                    <label>Danh mục:</label>
+                    <select id="categoryFilter" style="padding: 8px; border-radius: 5px; border: 1px solid #ddd;">
+                        <option value="ALL">Tất cả</option>
+                        <option value="DESKTOP">Máy tính</option>
+                        <option value="SMARTPHONE">Điện thoại</option>
+                        <option value="TABLET">Máy tính bảng</option>
+                        <option value="ACCESSORY">Phụ kiện</option>
+                    </select>
+                </div>
+            </div>
+            <div class="table-wrapper"></div>
+        </section>
+    `;
+
     const tableWrapper = container.querySelector(".table-wrapper");
-    commonTable(tableWrapper, columns, productDataMock);
+    const statsWrapper = container.querySelector(".stats-wrapper");
+    const searchInput = container.querySelector(".search-bar input");
+    const select = container.querySelector("#categoryFilter");
+
+    async function loadAndRender() {
+        const products = await fetchData.get("products");
+
+        const columns = [
+            {
+                title: "Hình",
+                dataIndex: "imageUrl",
+                render: () =>
+                    `<img src="https://picsum.photos/200" alt="Ảnh" style="width:45px; height:45px; object-fit:cover; border-radius:6px;">`,
+            },
+            {
+                title: "Thông tin sản phẩm",
+                dataIndex: "name",
+                render: (_, row) =>
+                    `<div><strong>${row.name}</strong><br><small>SKU: ${row.sku}</small></div>`,
+            },
+            {
+                title: "Danh mục",
+                dataIndex: "category",
+                render: (value) => value.name || "Chưa phân loại",
+            },
+            {
+                title: "Giá bán",
+                dataIndex: "price",
+                render: (value) =>
+                    `<strong>${Number(value).toLocaleString("vi-VN")}đ</strong>`,
+            },
+            {
+                title: "Tồn kho",
+                dataIndex: "remaining",
+            },
+            {
+                title: "Thao tác",
+                dataIndex: "id",
+                render: (value) => {
+                    const fragment = document.createDocumentFragment();
+
+                    const editBtn = document.createElement("button");
+                    editBtn.className = "btn-icon edit btn-action";
+                    editBtn.innerHTML = `<i class="fas fa-edit"></i>`;
+                    editBtn.onclick = () =>
+                        (window.location.hash = `/products/edit/${value}`);
+
+                    const deleteBtn = document.createElement("button");
+                    deleteBtn.className = "btn-icon delete btn-action";
+                    deleteBtn.innerHTML = `<i class="fas fa-trash"></i>`;
+                    deleteBtn.addEventListener("click", async () => {
+                        if (confirm("Bạn có chắc muốn xóa?")) {
+                            deleteBtn.innerHTML =
+                                '<i class="fas fa-spinner fa-spin"></i>';
+                            deleteBtn.style.pointerEvents = "none";
+
+                            const res = await fetchData.delete(
+                                "products",
+                                value,
+                            );
+                            if (res) {
+                                await loadAndRender();
+                            }
+                        }
+                    });
+
+                    fragment.append(editBtn, deleteBtn);
+                    return fragment;
+                },
+            },
+        ];
+
+        commonTable(tableWrapper, columns, products);
+
+        statsWrapper.innerHTML = "";
+        const summaryEl = createSummary([
+            {
+                title: "Tổng sản phẩm",
+                value: products?.length || 0,
+                cardColor: "no-border-left",
+            },
+            { title: "Danh mục", value: "4", cardColor: "no-border-left" },
+        ]);
+        statsWrapper.appendChild(summaryEl);
+
+        createFilter({
+            data: products,
+            searchFields: ["name", "sku"],
+            searchEl: searchInput,
+            selectEl: select,
+            getFilterValue: (item, val) =>
+                val === "ALL"
+                    ? true
+                    : item.category?.name?.toUpperCase() === val,
+            render: (filteredData) => {
+                tableWrapper.innerHTML = "";
+                commonTable(tableWrapper, columns, filteredData);
+            },
+        });
+    }
+
+    await loadAndRender();
+
     return container;
 }

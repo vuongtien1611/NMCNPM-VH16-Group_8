@@ -3,12 +3,13 @@ import { createForm } from "../components/form.js";
 
 export async function createCustomer(params = {}) {
     const container = document.createElement("div");
-    const id = params?.id
+    const id = params?.id;
     let initialValues = {};
     if (id) {
         try {
-            const res = await fetchData.get('customers');
-            initialValues = res.find(item => item.id == id);
+            const res = await fetchData.get("customers");
+            initialValues =
+                res.find((item) => String(item.id) === String(id)) || {};
         } catch (err) {
             console.error(err);
         }
@@ -79,19 +80,25 @@ export async function createCustomer(params = {}) {
             ],
             onSubmit: async (values) => {
                 try {
-                    let resposonsive
+                    let resposonsive;
                     if (id) {
-                        resposonsive = await fetchData.update('customers', {...values, id})
+                        resposonsive = await fetchData.update("customers", {
+                            ...values,
+                            id,
+                        });
                     } else {
-                        resposonsive = await fetchData.create('customers', values)
+                        resposonsive = await fetchData.create(
+                            "customers",
+                            values,
+                        );
                     }
-                    if (!resposonsive) return
-                    window.location.hash = '/customers'
+                    if (!resposonsive) return;
+                    window.location.hash = "/customers";
                 } catch (error) {
                     console.error(error);
                 }
             },
-            onCancel: () => window.location.hash = '/customers'
+            onCancel: () => (window.location.hash = "/customers"),
         });
     });
 

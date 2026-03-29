@@ -49,6 +49,18 @@ export function createForm({
 
             const value = input.value;
 
+            if (field.type === "number" && value !== "") {
+                let valueN = input.value;
+                if (isNaN(valueN.replace(/,/g, ""))) {
+                    error.innerText = "Vui lòng nhập số hợp lệ";
+                    isValid = false;
+                    return;
+                }
+                valueN = valueN !== "" ? Number(valueN.replace(/,/g, "")) : 0;
+
+                state[field.name] = valueN;
+            }
+
             if (field.required && !value) {
                 error.innerText = "Trường này là bắt buộc";
                 isValid = false;

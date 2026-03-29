@@ -3,9 +3,10 @@ import { home } from "../pages/home.js";
 import { product } from "../pages/product.js";
 import { order } from "../pages/order.js";
 import { customer } from "../pages/customer.js";
-import { createCustomer } from "../pages/create-customer.js";
 import { report } from "../pages/report.js";
 import { checkAndRefreshToken } from "../apis/auth.js";
+import { createCustomer } from "../pages/create-customer.js";
+import { createProduct } from "../pages/create-product.js";
 
 const routes = {
     "/": home,
@@ -13,6 +14,8 @@ const routes = {
     "/orders": order,
     "/customers": customer,
     "/reports": report,
+    "/products/create": createProduct,
+    "/products/edit/:id": createProduct,
     "/customers/create": createCustomer,
     "/customers/edit/:id": createCustomer,
 };
