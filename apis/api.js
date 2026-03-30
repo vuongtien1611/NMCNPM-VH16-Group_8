@@ -74,8 +74,6 @@ export const fetchData = {
   },
   update: async (endpoint, payload) => {
     try {
-      console.log(`${endpoint}/${payload.id}`);
-
       const result = await fetchWithAuth(
         `${endpoint}/${payload.id}`,
         "PUT",
