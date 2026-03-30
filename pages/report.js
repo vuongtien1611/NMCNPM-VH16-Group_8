@@ -6,8 +6,9 @@ function loadChartJS() {
     return new Promise((resolve, reject) => {
         if (window.Chart) return resolve(); // đã có rồi
         const script = document.createElement("script");
-        script.src = "https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js";
-        script.onload  = resolve;
+        script.src =
+            "https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js";
+        script.onload = resolve;
         script.onerror = reject;
         document.head.appendChild(script);
     });
@@ -32,17 +33,16 @@ function toISO(date) {
     return date.toISOString().split("T")[0];
 }
 
-
 // COMPUTE STATS
 function computeStats(orders) {
-    const doneOrders    = orders.filter((o) => o.status === "done");
+    const doneOrders = orders.filter((o) => o.status === "done");
     const pendingOrders = orders.filter((o) => o.status === "pending");
 
-    const totalRevenue    = doneOrders.reduce((sum, o) => sum + calcRevenue(o), 0);
-    const totalOrders     = orders.length;
+    const totalRevenue = doneOrders.reduce((sum, o) => sum + calcRevenue(o), 0);
+    const totalOrders = orders.length;
     const completedOrders = doneOrders.length;
     const uniqueCustomers = new Set(
-        orders.map((o) => o.customer?.id).filter(Boolean)
+        orders.map((o) => o.customer?.id).filter(Boolean),
     ).size;
 
     // Doanh thu theo ngày (7 ngày gần nhất)
@@ -69,13 +69,13 @@ function computeStats(orders) {
         if (!pid) return;
         if (!productMap[pid]) {
             productMap[pid] = {
-                name:      o.product?.name      ?? "?",
+                name: o.product?.name ?? "?",
                 remaining: o.product?.remaining ?? 0,
-                qty:       0,
-                revenue:   0,
+                qty: 0,
+                revenue: 0,
             };
         }
-        productMap[pid].qty     += o.amount ?? 0;
+        productMap[pid].qty += o.amount ?? 0;
         productMap[pid].revenue += calcRevenue(o);
     });
     const topProducts = Object.values(productMap)
@@ -95,14 +95,14 @@ function computeStats(orders) {
     };
 }
 
-
 // BUILD DOM (createElement)
 function buildHeader(container) {
-    const today    = new Date();
+    const today = new Date();
     const monthAgo = new Date();
     monthAgo.setDate(today.getDate() - 30);
 
     const header = document.createElement("header");
+    header.className = "header";
 
     const title = document.createElement("h2");
     title.textContent = "Báo cáo kinh doanh";
@@ -111,17 +111,17 @@ function buildHeader(container) {
     filterGroup.className = "filter-group";
 
     const dateFrom = document.createElement("input");
-    dateFrom.type  = "date";
-    dateFrom.id    = "dateFrom";
+    dateFrom.type = "date";
+    dateFrom.id = "dateFrom";
     dateFrom.value = toISO(monthAgo);
 
-    const dateTo  = document.createElement("input");
-    dateTo.type   = "date";
-    dateTo.id     = "dateTo";
-    dateTo.value  = toISO(today);
+    const dateTo = document.createElement("input");
+    dateTo.type = "date";
+    dateTo.id = "dateTo";
+    dateTo.value = toISO(today);
 
     const btnFilter = document.createElement("button");
-    btnFilter.id    = "btnFilter";
+    btnFilter.id = "btnFilter";
 
     const icon = document.createElement("i");
     icon.className = "fas fa-filter";
@@ -136,7 +136,7 @@ function buildHeader(container) {
 
 function buildStatsGrid(container) {
     const grid = document.createElement("div");
-    grid.className = "stats-grid";
+    grid.className = "stats";
     container.appendChild(grid);
 }
 
@@ -174,10 +174,11 @@ function buildCharts(container) {
 
 function buildTopProducts(container) {
     const section = document.createElement("div");
-    section.className = "top-products";
+    section.className = "table-container";
 
     const title = document.createElement("h3");
     title.textContent = "Sản phẩm bán chạy nhất";
+    title.className = "table-header";
 
     const table = document.createElement("table");
 
@@ -204,46 +205,46 @@ function renderStatCards(container, stats) {
 
     const items = [
         {
-            title:      "Doanh thu",
-            value:      formatVND(stats.totalRevenue),
-            trendIcon:  "fas fa-shopping-bag",
-            trendText:  `${stats.completedOrders} đơn hoàn thành`,
+            title: "Doanh thu",
+            value: formatVND(stats.totalRevenue),
+            trendIcon: "fas fa-shopping-bag",
+            trendText: `${stats.completedOrders} đơn hoàn thành`,
             trendClass: "trend up",
         },
         {
-            title:      "Đơn hàng",
-            value:      stats.totalOrders,
-            trendIcon:  "fas fa-clock",
-            trendText:  `${stats.pendingCount} đơn chờ xử lý`,
+            title: "Đơn hàng",
+            value: stats.totalOrders,
+            trendIcon: "fas fa-clock",
+            trendText: `${stats.pendingCount} đơn chờ xử lý`,
             trendClass: "trend",
             trendColor: "#f39c12",
         },
         {
-            title:      "Lợi nhuận",
-            value:      formatVND(profit),
-            trendIcon:  "fas fa-info-circle",
-            trendText:  "Ước tính 25% doanh thu",
+            title: "Lợi nhuận",
+            value: formatVND(profit),
+            trendIcon: "fas fa-info-circle",
+            trendText: "Ước tính 25% doanh thu",
             trendClass: "trend",
             trendColor: "#7f8c8d",
         },
         {
-            title:      "Khách hàng",
-            value:      stats.uniqueCustomers,
-            trendIcon:  "fas fa-users",
-            trendText:  "Khách hàng trong kỳ",
+            title: "Khách hàng",
+            value: stats.uniqueCustomers,
+            trendIcon: "fas fa-users",
+            trendText: "Khách hàng trong kỳ",
             trendClass: "trend up",
         },
     ];
 
-    const grid = container.querySelector(".stats-grid");
+    const grid = container.querySelector(".stats");
     grid.innerHTML = "";
 
     items.forEach((item) => {
         const card = document.createElement("div");
-        card.className = "stat-card";
+        card.className = "card";
 
-        const h4 = document.createElement("h4");
-        h4.textContent = item.title;
+        const h3 = document.createElement("h3");
+        h3.textContent = item.title;
 
         const value = document.createElement("div");
         value.className = "value";
@@ -259,13 +260,13 @@ function renderStatCards(container, stats) {
         const trendText = document.createTextNode(` ${item.trendText}`);
 
         trend.append(trendIcon, trendText);
-        card.append(h4, value, trend);
+        card.append(h3, value, trend);
         grid.appendChild(card);
     });
 }
 
 // RENDER CHARTS
-let revenueChartInstance  = null;
+let revenueChartInstance = null;
 let categoryChartInstance = null;
 
 function renderLineChart(container, labels, values) {
@@ -278,22 +279,26 @@ function renderLineChart(container, labels, values) {
         type: "line",
         data: {
             labels,
-            datasets: [{
-                label: "Doanh thu (VNĐ)",
-                data: values,
-                borderColor: "#3498db",
-                backgroundColor: "rgba(52,152,219,0.1)",
-                fill: true,
-                tension: 0.4,
-                pointRadius: 5,
-                pointHoverRadius: 7,
-            }],
+            datasets: [
+                {
+                    label: "Doanh thu (VNĐ)",
+                    data: values,
+                    borderColor: "#3498db",
+                    backgroundColor: "rgba(52,152,219,0.1)",
+                    fill: true,
+                    tension: 0.4,
+                    pointRadius: 5,
+                    pointHoverRadius: 7,
+                },
+            ],
         },
         options: {
             responsive: true,
             plugins: {
                 legend: { display: false },
-                tooltip: { callbacks: { label: (c) => ` ${formatVND(c.raw)}` } },
+                tooltip: {
+                    callbacks: { label: (c) => ` ${formatVND(c.raw)}` },
+                },
             },
             scales: {
                 y: { ticks: { callback: (v) => v.toLocaleString("vi-VN") } },
@@ -312,18 +317,28 @@ function renderDoughnutChart(container, revenueByCategory) {
         type: "doughnut",
         data: {
             labels: Object.keys(revenueByCategory),
-            datasets: [{
-                data: Object.values(revenueByCategory),
-                backgroundColor: ["#3498db", "#2ecc71", "#f1c40f", "#e74c3c", "#9b59b6"],
-                borderWidth: 2,
-                borderColor: "#fff",
-            }],
+            datasets: [
+                {
+                    data: Object.values(revenueByCategory),
+                    backgroundColor: [
+                        "#3498db",
+                        "#2ecc71",
+                        "#f1c40f",
+                        "#e74c3c",
+                        "#9b59b6",
+                    ],
+                    borderWidth: 2,
+                    borderColor: "#fff",
+                },
+            ],
         },
         options: {
             responsive: true,
             plugins: {
                 legend: { position: "bottom" },
-                tooltip: { callbacks: { label: (c) => ` ${formatVND(c.raw)}` } },
+                tooltip: {
+                    callbacks: { label: (c) => ` ${formatVND(c.raw)}` },
+                },
             },
         },
     });
@@ -332,8 +347,8 @@ function renderDoughnutChart(container, revenueByCategory) {
 // RENDER TOP PRODUCTS
 function getStockStatus(remaining) {
     if (remaining === 0) return { text: "Hết hàng", color: "var(--danger)" };
-    if (remaining < 10)  return { text: "Sắp hết",  color: "var(--danger)" };
-    return                      { text: "Còn hàng", color: "var(--success)" };
+    if (remaining < 10) return { text: "Sắp hết", color: "var(--danger)" };
+    return { text: "Còn hàng", color: "var(--success)" };
 }
 
 function renderTopProducts(container, topProducts) {
@@ -345,7 +360,7 @@ function renderTopProducts(container, topProducts) {
     if (!topProducts.length) {
         const tr = document.createElement("tr");
         const td = document.createElement("td");
-        td.colSpan   = 4;
+        td.colSpan = 4;
         td.textContent = "Không có dữ liệu";
         td.className = "empty-row";
         tr.appendChild(td);
@@ -358,21 +373,21 @@ function renderTopProducts(container, topProducts) {
 
         const tr = document.createElement("tr");
 
-        const tdName    = document.createElement("td");
+        const tdName = document.createElement("td");
         tdName.textContent = p.name;
 
-        const tdQty     = document.createElement("td");
+        const tdQty = document.createElement("td");
         tdQty.textContent = p.qty.toLocaleString("vi-VN");
 
         const tdRevenue = document.createElement("td");
-        const strong    = document.createElement("strong");
+        const strong = document.createElement("strong");
         strong.textContent = formatVND(p.revenue);
         tdRevenue.appendChild(strong);
 
-        const tdStatus  = document.createElement("td");
-        const span      = document.createElement("span");
-        span.textContent  = text;
-        span.style.color  = color;
+        const tdStatus = document.createElement("td");
+        const span = document.createElement("span");
+        span.textContent = text;
+        span.style.color = color;
         span.style.fontWeight = "500";
         tdStatus.appendChild(span);
 
@@ -390,27 +405,21 @@ function renderAll(container, orders) {
     renderTopProducts(container, stats.topProducts);
 }
 
-
 // FILTER
 function filterByDate(container, allOrders) {
     const from = container.querySelector("#dateFrom")?.value ?? "";
-    const to   = container.querySelector("#dateTo")?.value   ?? "";
+    const to = container.querySelector("#dateTo")?.value ?? "";
 
     return allOrders.filter((o) => {
         if (!o.date) return true;
         if (from && o.date < from) return false;
-        if (to   && o.date > to)   return false;
+        if (to && o.date > to) return false;
         return true;
     });
 }
 
-
 // EXPORT — main.js gọi, mount vào #app
 export async function report() {
-    // Check auth — nếu chưa đăng nhập thì redirect login
-    const isAuth = await checkAndRefreshToken();
-    if (!isAuth) return document.createElement("div");
-
     const container = document.createElement("div");
     container.className = "report-page";
 
