@@ -1,3 +1,444 @@
+import { fetchData } from "../apis/api.js";
+import { checkAndRefreshToken } from "../apis/auth.js";
+
+// Load Chart.js động nếu chưa có (không cần sửa index.html của người khác)
+function loadChartJS() {
+    return new Promise((resolve, reject) => {
+        if (window.Chart) return resolve(); // đã có rồi
+        const script = document.createElement("script");
+        script.src = "https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js";
+        script.onload  = resolve;
+        script.onerror = reject;
+        document.head.appendChild(script);
+    });
+}
+
+// HELPERS
+function calcRevenue(order) {
+    return (order.amount ?? 0) * (order.product?.price ?? 0);
+}
+
+function formatVND(value) {
+    return Number(value).toLocaleString("vi-VN") + "đ";
+}
+
+function formatDateLabel(dateStr) {
+    if (!dateStr) return "";
+    const [, m, d] = dateStr.split("-");
+    return `${d}/${m}`;
+}
+
+function toISO(date) {
+    return date.toISOString().split("T")[0];
+}
+
+
+// COMPUTE STATS
+function computeStats(orders) {
+    const doneOrders    = orders.filter((o) => o.status === "done");
+    const pendingOrders = orders.filter((o) => o.status === "pending");
+
+    const totalRevenue    = doneOrders.reduce((sum, o) => sum + calcRevenue(o), 0);
+    const totalOrders     = orders.length;
+    const completedOrders = doneOrders.length;
+    const uniqueCustomers = new Set(
+        orders.map((o) => o.customer?.id).filter(Boolean)
+    ).size;
+
+    // Doanh thu theo ngày (7 ngày gần nhất)
+    const revenueByDate = {};
+    doneOrders.forEach((o) => {
+        const d = o.date ?? "unknown";
+        revenueByDate[d] = (revenueByDate[d] ?? 0) + calcRevenue(o);
+    });
+    const sortedDates = Object.keys(revenueByDate).sort().slice(-7);
+    const chartLabels = sortedDates.map(formatDateLabel);
+    const chartValues = sortedDates.map((d) => revenueByDate[d]);
+
+    // Doanh thu theo danh mục
+    const revenueByCategory = {};
+    doneOrders.forEach((o) => {
+        const cat = o.product?.category?.name ?? "Khác";
+        revenueByCategory[cat] = (revenueByCategory[cat] ?? 0) + calcRevenue(o);
+    });
+
+    // Top sản phẩm
+    const productMap = {};
+    doneOrders.forEach((o) => {
+        const pid = o.product?.id;
+        if (!pid) return;
+        if (!productMap[pid]) {
+            productMap[pid] = {
+                name:      o.product?.name      ?? "?",
+                remaining: o.product?.remaining ?? 0,
+                qty:       0,
+                revenue:   0,
+            };
+        }
+        productMap[pid].qty     += o.amount ?? 0;
+        productMap[pid].revenue += calcRevenue(o);
+    });
+    const topProducts = Object.values(productMap)
+        .sort((a, b) => b.revenue - a.revenue)
+        .slice(0, 5);
+
+    return {
+        totalRevenue,
+        totalOrders,
+        completedOrders,
+        pendingCount: pendingOrders.length,
+        uniqueCustomers,
+        chartLabels,
+        chartValues,
+        revenueByCategory,
+        topProducts,
+    };
+}
+
+
+// BUILD DOM (createElement)
+function buildHeader(container) {
+    const today    = new Date();
+    const monthAgo = new Date();
+    monthAgo.setDate(today.getDate() - 30);
+
+    const header = document.createElement("header");
+
+    const title = document.createElement("h2");
+    title.textContent = "Báo cáo kinh doanh";
+
+    const filterGroup = document.createElement("div");
+    filterGroup.className = "filter-group";
+
+    const dateFrom = document.createElement("input");
+    dateFrom.type  = "date";
+    dateFrom.id    = "dateFrom";
+    dateFrom.value = toISO(monthAgo);
+
+    const dateTo  = document.createElement("input");
+    dateTo.type   = "date";
+    dateTo.id     = "dateTo";
+    dateTo.value  = toISO(today);
+
+    const btnFilter = document.createElement("button");
+    btnFilter.id    = "btnFilter";
+
+    const icon = document.createElement("i");
+    icon.className = "fas fa-filter";
+
+    btnFilter.appendChild(icon);
+    btnFilter.append(" Lọc");
+
+    filterGroup.append(dateFrom, dateTo, btnFilter);
+    header.append(title, filterGroup);
+    container.appendChild(header);
+}
+
+function buildStatsGrid(container) {
+    const grid = document.createElement("div");
+    grid.className = "stats-grid";
+    container.appendChild(grid);
+}
+
+function buildCharts(container) {
+    const chartsContainer = document.createElement("div");
+    chartsContainer.className = "charts-container";
+
+    // Chart đường
+    const lineBox = document.createElement("div");
+    lineBox.className = "chart-box";
+
+    const lineTitle = document.createElement("h3");
+    lineTitle.textContent = "Biểu đồ doanh thu 7 ngày gần nhất";
+
+    const lineCanvas = document.createElement("canvas");
+    lineCanvas.id = "revenueChart";
+
+    lineBox.append(lineTitle, lineCanvas);
+
+    // Chart tròn
+    const donutBox = document.createElement("div");
+    donutBox.className = "chart-box";
+
+    const donutTitle = document.createElement("h3");
+    donutTitle.textContent = "Cơ cấu sản phẩm";
+
+    const donutCanvas = document.createElement("canvas");
+    donutCanvas.id = "categoryChart";
+
+    donutBox.append(donutTitle, donutCanvas);
+
+    chartsContainer.append(lineBox, donutBox);
+    container.appendChild(chartsContainer);
+}
+
+function buildTopProducts(container) {
+    const section = document.createElement("div");
+    section.className = "top-products";
+
+    const title = document.createElement("h3");
+    title.textContent = "Sản phẩm bán chạy nhất";
+
+    const table = document.createElement("table");
+
+    const thead = document.createElement("thead");
+    const headerRow = document.createElement("tr");
+    ["Sản phẩm", "Số lượng bán", "Doanh thu", "Tình trạng"].forEach((text) => {
+        const th = document.createElement("th");
+        th.textContent = text;
+        headerRow.appendChild(th);
+    });
+    thead.appendChild(headerRow);
+
+    const tbody = document.createElement("tbody");
+    tbody.id = "topProductBody";
+
+    table.append(thead, tbody);
+    section.append(title, table);
+    container.appendChild(section);
+}
+
+// RENDER STAT CARDS
+function renderStatCards(container, stats) {
+    const profit = Math.round(stats.totalRevenue * 0.25);
+
+    const items = [
+        {
+            title:      "Doanh thu",
+            value:      formatVND(stats.totalRevenue),
+            trendIcon:  "fas fa-shopping-bag",
+            trendText:  `${stats.completedOrders} đơn hoàn thành`,
+            trendClass: "trend up",
+        },
+        {
+            title:      "Đơn hàng",
+            value:      stats.totalOrders,
+            trendIcon:  "fas fa-clock",
+            trendText:  `${stats.pendingCount} đơn chờ xử lý`,
+            trendClass: "trend",
+            trendColor: "#f39c12",
+        },
+        {
+            title:      "Lợi nhuận",
+            value:      formatVND(profit),
+            trendIcon:  "fas fa-info-circle",
+            trendText:  "Ước tính 25% doanh thu",
+            trendClass: "trend",
+            trendColor: "#7f8c8d",
+        },
+        {
+            title:      "Khách hàng",
+            value:      stats.uniqueCustomers,
+            trendIcon:  "fas fa-users",
+            trendText:  "Khách hàng trong kỳ",
+            trendClass: "trend up",
+        },
+    ];
+
+    const grid = container.querySelector(".stats-grid");
+    grid.innerHTML = "";
+
+    items.forEach((item) => {
+        const card = document.createElement("div");
+        card.className = "stat-card";
+
+        const h4 = document.createElement("h4");
+        h4.textContent = item.title;
+
+        const value = document.createElement("div");
+        value.className = "value";
+        value.textContent = item.value;
+
+        const trend = document.createElement("div");
+        trend.className = item.trendClass;
+        if (item.trendColor) trend.style.color = item.trendColor;
+
+        const trendIcon = document.createElement("i");
+        trendIcon.className = item.trendIcon;
+
+        const trendText = document.createTextNode(` ${item.trendText}`);
+
+        trend.append(trendIcon, trendText);
+        card.append(h4, value, trend);
+        grid.appendChild(card);
+    });
+}
+
+// RENDER CHARTS
+let revenueChartInstance  = null;
+let categoryChartInstance = null;
+
+function renderLineChart(container, labels, values) {
+    const ctx = container.querySelector("#revenueChart")?.getContext("2d");
+    if (!ctx) return;
+
+    if (revenueChartInstance) revenueChartInstance.destroy();
+
+    revenueChartInstance = new Chart(ctx, {
+        type: "line",
+        data: {
+            labels,
+            datasets: [{
+                label: "Doanh thu (VNĐ)",
+                data: values,
+                borderColor: "#3498db",
+                backgroundColor: "rgba(52,152,219,0.1)",
+                fill: true,
+                tension: 0.4,
+                pointRadius: 5,
+                pointHoverRadius: 7,
+            }],
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { display: false },
+                tooltip: { callbacks: { label: (c) => ` ${formatVND(c.raw)}` } },
+            },
+            scales: {
+                y: { ticks: { callback: (v) => v.toLocaleString("vi-VN") } },
+            },
+        },
+    });
+}
+
+function renderDoughnutChart(container, revenueByCategory) {
+    const ctx = container.querySelector("#categoryChart")?.getContext("2d");
+    if (!ctx) return;
+
+    if (categoryChartInstance) categoryChartInstance.destroy();
+
+    categoryChartInstance = new Chart(ctx, {
+        type: "doughnut",
+        data: {
+            labels: Object.keys(revenueByCategory),
+            datasets: [{
+                data: Object.values(revenueByCategory),
+                backgroundColor: ["#3498db", "#2ecc71", "#f1c40f", "#e74c3c", "#9b59b6"],
+                borderWidth: 2,
+                borderColor: "#fff",
+            }],
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { position: "bottom" },
+                tooltip: { callbacks: { label: (c) => ` ${formatVND(c.raw)}` } },
+            },
+        },
+    });
+}
+
+// RENDER TOP PRODUCTS
+function getStockStatus(remaining) {
+    if (remaining === 0) return { text: "Hết hàng", color: "var(--danger)" };
+    if (remaining < 10)  return { text: "Sắp hết",  color: "var(--danger)" };
+    return                      { text: "Còn hàng", color: "var(--success)" };
+}
+
+function renderTopProducts(container, topProducts) {
+    const tbody = container.querySelector("#topProductBody");
+    if (!tbody) return;
+
+    tbody.innerHTML = "";
+
+    if (!topProducts.length) {
+        const tr = document.createElement("tr");
+        const td = document.createElement("td");
+        td.colSpan   = 4;
+        td.textContent = "Không có dữ liệu";
+        td.className = "empty-row";
+        tr.appendChild(td);
+        tbody.appendChild(tr);
+        return;
+    }
+
+    topProducts.forEach((p) => {
+        const { text, color } = getStockStatus(p.remaining);
+
+        const tr = document.createElement("tr");
+
+        const tdName    = document.createElement("td");
+        tdName.textContent = p.name;
+
+        const tdQty     = document.createElement("td");
+        tdQty.textContent = p.qty.toLocaleString("vi-VN");
+
+        const tdRevenue = document.createElement("td");
+        const strong    = document.createElement("strong");
+        strong.textContent = formatVND(p.revenue);
+        tdRevenue.appendChild(strong);
+
+        const tdStatus  = document.createElement("td");
+        const span      = document.createElement("span");
+        span.textContent  = text;
+        span.style.color  = color;
+        span.style.fontWeight = "500";
+        tdStatus.appendChild(span);
+
+        tr.append(tdName, tdQty, tdRevenue, tdStatus);
+        tbody.appendChild(tr);
+    });
+}
+
+// RENDER TẤT CẢ
+function renderAll(container, orders) {
+    const stats = computeStats(orders);
+    renderStatCards(container, stats);
+    renderLineChart(container, stats.chartLabels, stats.chartValues);
+    renderDoughnutChart(container, stats.revenueByCategory);
+    renderTopProducts(container, stats.topProducts);
+}
+
+
+// FILTER
+function filterByDate(container, allOrders) {
+    const from = container.querySelector("#dateFrom")?.value ?? "";
+    const to   = container.querySelector("#dateTo")?.value   ?? "";
+
+    return allOrders.filter((o) => {
+        if (!o.date) return true;
+        if (from && o.date < from) return false;
+        if (to   && o.date > to)   return false;
+        return true;
+    });
+}
+
+
+// EXPORT — main.js gọi, mount vào #app
 export async function report() {
-    return `Report page`;
+    // Check auth — nếu chưa đăng nhập thì redirect login
+    const isAuth = await checkAndRefreshToken();
+    if (!isAuth) return document.createElement("div");
+
+    const container = document.createElement("div");
+    container.className = "report-page";
+
+    // Build DOM
+    buildHeader(container);
+    buildStatsGrid(container);
+    buildCharts(container);
+    buildTopProducts(container);
+
+    // Load Chart.js trước
+    await loadChartJS();
+
+    // Fetch data
+    let allOrders = [];
+    try {
+        allOrders = (await fetchData.get("orders")) || [];
+    } catch (err) {
+        console.error("Lỗi fetch orders:", err);
+    }
+
+    // Render data vào DOM
+    renderAll(container, allOrders);
+
+    // Gắn sự kiện nút Lọc
+    container.querySelector("#btnFilter").addEventListener("click", () => {
+        const filtered = filterByDate(container, allOrders);
+        renderAll(container, filtered);
+    });
+
+    return container;
 }
