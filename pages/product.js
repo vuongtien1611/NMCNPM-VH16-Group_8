@@ -2,6 +2,7 @@ import { fetchData } from "../apis/api.js";
 import { createFilter } from "../components/filter.js";
 import { createSummary } from "../components/summary.js";
 import { commonTable } from "../components/table.js";
+import { createActionButtons, formatVND } from "../utils.js";
 
 export async function product() {
     const container = document.createElement("div");
@@ -43,8 +44,8 @@ export async function product() {
             {
                 title: "Hình",
                 dataIndex: "imageUrl",
-                render: () =>
-                    `<img src="https://picsum.photos/200" alt="Ảnh" style="width:45px; height:45px; object-fit:cover; border-radius:6px;">`,
+                render: (_, row) =>
+                    `<img src="https://picsum.photos/200?random=${row.id}" alt="${row.name}" style="width:45px; height:45px; object-fit:cover; border-radius:6px;">`,
             },
             {
                 title: "Thông tin sản phẩm",
@@ -60,8 +61,7 @@ export async function product() {
             {
                 title: "Giá bán",
                 dataIndex: "price",
-                render: (value) =>
-                    `<strong>${Number(value).toLocaleString("vi-VN")}đ</strong>`,
+                render: (value) => formatVND(value),
             },
             {
                 title: "Tồn kho",
@@ -70,37 +70,12 @@ export async function product() {
             {
                 title: "Thao tác",
                 dataIndex: "id",
-                render: (value) => {
-                    const fragment = document.createDocumentFragment();
-
-                    const editBtn = document.createElement("button");
-                    editBtn.className = "btn-action btn-icon edit ";
-                    editBtn.innerHTML = `<i class="fas fa-edit"></i>`;
-                    editBtn.onclick = () =>
-                        (window.location.hash = `/products/edit/${value}`);
-
-                    const deleteBtn = document.createElement("button");
-                    deleteBtn.className = "btn-action btn-icon delete ";
-                    deleteBtn.innerHTML = `<i class="fas fa-trash"></i>`;
-                    deleteBtn.addEventListener("click", async () => {
-                        if (confirm("Bạn có chắc muốn xóa?")) {
-                            deleteBtn.innerHTML =
-                                '<i class="fas fa-spinner fa-spin"></i>';
-                            deleteBtn.style.pointerEvents = "none";
-
-                            const res = await fetchData.delete(
-                                "products",
-                                value,
-                            );
-                            if (res) {
-                                await loadAndRender();
-                            }
-                        }
-                    });
-
-                    fragment.append(editBtn, deleteBtn);
-                    return fragment;
-                },
+                render: (value) =>
+                    createActionButtons({
+                        id: value,
+                        endpoint: "products",
+                        onSuccess: loadAndRender,
+                    }),
             },
         ];
 

@@ -88,14 +88,15 @@ export async function createCustomer(params = {}) {
                             ...values,
                             id,
                         });
+                        window.location.hash = "/customers";
                     } else {
                         resposonsive = await fetchData.create(
                             "customers",
                             values,
                         );
+                        window.location.hash = "/customers/create";
                     }
                     if (!resposonsive) return;
-                    window.location.hash = "/customers";
                 } catch (error) {
                     console.error(error);
                 }

@@ -1,12 +1,13 @@
 import { sidebar } from "../components/sidebar.js";
 import { home } from "../pages/home.js";
 import { product } from "../pages/product.js";
-import { order } from "../pages/order.js";
+import { order } from "../pages/orders.js";
 import { customer } from "../pages/customer.js";
 import { report } from "../pages/report.js";
 import { checkAndRefreshToken } from "../apis/auth.js";
 import { createCustomer } from "../pages/create-customer.js";
 import { createProduct } from "../pages/create-product.js";
+import { createOrder } from "../pages/create-order.js";
 
 const routes = {
     "/": home,
@@ -18,6 +19,7 @@ const routes = {
     "/products/edit/:id": createProduct,
     "/customers/create": createCustomer,
     "/customers/edit/:id": createCustomer,
+    "/order/create": createOrder,
 };
 const app = document.querySelector("#app");
 let authCheckTimeout = null;

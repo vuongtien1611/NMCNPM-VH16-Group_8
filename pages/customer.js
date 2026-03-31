@@ -2,35 +2,15 @@ import { fetchData } from "../apis/api.js";
 import { createFilter } from "../components/filter.js";
 import { createSummary } from "../components/summary.js";
 import { commonTable } from "../components/table.js";
+import {
+    createActionButtons,
+    formatAndMaskPhone,
+    formatVND,
+    getRankColor,
+    getRankVN,
+} from "../utils.js";
 
 export async function customer() {
-    const customers = await fetchData.get("customers");
-    function getRankColor(rank) {
-        switch (rank?.toUpperCase()) {
-            case "GOLD":
-                return "gold";
-            case "SILVER":
-                return "silver";
-            case "BRONZE":
-                return "bronze";
-            default:
-                return "#ccc";
-        }
-    }
-
-    function getRankVN(rank) {
-        switch (rank?.toUpperCase()) {
-            case "GOLD":
-                return "VÀNG";
-            case "SILVER":
-                return "BẠC";
-            case "BRONZE":
-                return "ĐỒNG";
-            default:
-                return "-";
-        }
-    }
-
     const container = document.createElement("div");
     container.innerHTML = `
             <header class="header">
@@ -66,6 +46,8 @@ export async function customer() {
     const select = container.querySelector("select");
 
     async function loadAndRender() {
+        const customers = await fetchData.get("customers");
+
         const columns = [
             {
                 title: "Khách hàng",
@@ -96,7 +78,7 @@ export async function customer() {
                 title: "Liên hệ",
                 dataIndex: "email",
                 render: (_, row) =>
-                    `${row.email}<br><small>${row.phone}</small>`,
+                    `${row.email}<br><small>${formatAndMaskPhone(row.phone)}</small>`,
             },
             {
                 title: "Hạng",
@@ -108,46 +90,17 @@ export async function customer() {
             {
                 title: "Tổng chi tiêu",
                 dataIndex: "totalSpending",
-                render: (value) =>
-                    value
-                        ? `<strong>${value.toLocaleString("vi-VN")}đ</strong>`
-                        : `<em>Chưa có</em>`,
+                render: (value) => formatVND(value) || 0,
             },
             {
                 title: "Thao tác",
                 dataIndex: "id",
-                render: (value) => {
-                    const fragment = document.createDocumentFragment();
-
-                    const editBtn = document.createElement("button");
-                    editBtn.classList.add("btn-icon", "edit", "btn-action");
-                    editBtn.title = "Sửa";
-                    editBtn.innerHTML = `<i class="fas fa-edit"></i>`;
-                    editBtn.addEventListener("click", () => {
-                        window.location.hash = `/customers/edit/${value}`;
-                    });
-
-                    const deleteBtn = document.createElement("button");
-                    deleteBtn.className = "btn-icon delete btn-action";
-                    deleteBtn.innerHTML = `<i class="fas fa-trash"></i>`;
-                    deleteBtn.addEventListener("click", async () => {
-                        if (confirm("Bạn có chắc muốn xóa?")) {
-                            deleteBtn.innerHTML =
-                                '<i class="fas fa-spinner fa-spin"></i>';
-                            deleteBtn.style.pointerEvents = "none";
-
-                            const res = await fetchData.delete(
-                                "customers",
-                                value,
-                            );
-                            if (res) {
-                                await loadAndRender();
-                            }
-                        }
-                    });
-                    fragment.append(editBtn, deleteBtn);
-                    return fragment;
-                },
+                render: (value) =>
+                    createActionButtons({
+                        id: value,
+                        endpoint: "customers",
+                        onSuccess: loadAndRender,
+                    }),
             },
         ];
 
@@ -181,11 +134,8 @@ export async function customer() {
             searchEl: searchInput,
             filterEl: select,
 
-            getFilterValue: (item, value) => {
-                if (value === "ALL") return true;
-                return item.rank?.toUpperCase() === value;
-            },
-
+            getFilterValue: (item, value) =>
+                value === "ALL" ? true : item.rank?.toUpperCase() === value,
             render: (filteredData) => {
                 tableWrapper.innerHTML = "";
                 commonTable(tableWrapper, columns, filteredData);

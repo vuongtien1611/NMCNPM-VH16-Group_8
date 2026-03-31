@@ -47,7 +47,9 @@ em {
 
 b,
 strong {
+
     font-weight: 700;
+
 }
 
 * {
@@ -105,6 +107,7 @@ body {
 
 .sidebar h2 {
     margin-bottom: 30px;
+
     text-align: center;
     color: var(--primary-color);
 }
@@ -130,6 +133,7 @@ body {
 
 .sidebar ul li i {
     margin-right: 12px;
+    width: 20px;
 }
 
 /* Main Content */
@@ -308,6 +312,7 @@ body {
 .table-container td {
     padding: 15px 20px;
     border-bottom: 1px solid #eee;
+
 }
 
 /* Customer Avatar & Info */

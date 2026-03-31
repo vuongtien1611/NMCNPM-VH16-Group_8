@@ -2,9 +2,8 @@ import { login } from "../apis/auth.js";
 
 (function isLogined() {
     const token = localStorage.getItem("access_token");
-    if (!token) {
-        window.location.href = "login.html";
-    } else {
+
+    if (token) {
         window.location.href = "./";
     }
 })();
