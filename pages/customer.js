@@ -11,6 +11,20 @@ import {
 } from "../utils.js";
 
 export async function customer() {
+    function calctotalSpending(orders, customerId) {
+        const userOrders = orders.filter(
+            (order) => Number(order.customer?.id) === Number(customerId),
+        );
+
+        const total = userOrders.reduce((sum, order) => {
+            const orderTotal =
+                Number(order.amount || 0) * Number(order.product?.price || 0);
+            return sum + orderTotal;
+        }, 0);
+
+        return total;
+    }
+
     const container = document.createElement("div");
     container.innerHTML = `
             <header class="header">
@@ -46,7 +60,10 @@ export async function customer() {
     const select = container.querySelector("select");
 
     async function loadAndRender() {
-        const customers = await fetchData.get("customers");
+        const [customers, orders] = await Promise.all([
+            fetchData.get("customers"),
+            fetchData.get("orders"),
+        ]);
 
         const columns = [
             {
@@ -92,6 +109,9 @@ export async function customer() {
                 dataIndex: "totalSpending",
                 render: (_, row) => {
                     const id = row.id;
+                    const totalSpending = calctotalSpending(orders, id);
+
+                    return formatVND(totalSpending);
                 },
             },
             {
