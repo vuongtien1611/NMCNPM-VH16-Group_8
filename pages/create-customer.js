@@ -8,7 +8,8 @@ export async function createCustomer(params = {}) {
     if (id) {
         try {
             const res = await fetchData.get("customers");
-            initialValues = res.find((item) => String(item.id) === String(id)) || {};
+            initialValues =
+                res.find((item) => String(item.id) === String(id)) || {};
         } catch (err) {
             console.error(err);
         }
@@ -87,11 +88,15 @@ export async function createCustomer(params = {}) {
                             ...values,
                             id,
                         });
+                        window.location.hash = "/customers";
                     } else {
-                        resposonsive = await fetchData.create("customers", values);
+                        resposonsive = await fetchData.create(
+                            "customers",
+                            values,
+                        );
+                        window.location.hash = "/customers/create";
                     }
                     if (!resposonsive) return;
-                    window.location.hash = "/customers";
                 } catch (error) {
                     console.error(error);
                 }
