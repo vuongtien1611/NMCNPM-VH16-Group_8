@@ -58,36 +58,91 @@ export async function createOrder() {
     form.addEventListener("submit", async (e) => {
         e.preventDefault();
         const formData = Object.fromEntries(new FormData(form).entries());
+
         formData.customerId = Number(formData.customerId);
         formData.productId = Number(formData.productId);
         formData.amount = Number(formData.amount);
 
-        if (isNaN(formData.customerId) || formData.customerId <= 0) {
+        if (Number.isNaN(formData.customerId) || formData.customerId <= 0) {
             alert("Khách hàng không hợp lệ");
             return;
         }
-        if (isNaN(formData.productId) || formData.productId <= 0) {
+
+        if (Number.isNaN(formData.productId) || formData.productId <= 0) {
             alert("Sản phẩm không hợp lệ");
             return;
         }
-        if (Number(formData.amount) <= 0 || formData.amount <= 0) {
+
+        if (Number.isNaN(formData.amount) || formData.amount <= 0) {
             alert("Số lượng không hợp lệ");
             return;
         }
 
-        const isPostOrder = confirm(`
-            Bạn có muốn tạo đơn hàng này không? 
-            Khách hàng: ${customers.find((c) => c.id === Number(formData.customerId))?.name}
-            Sản phẩm: ${products.find((p) => p.id === Number(formData.productId))?.name}
-            `);
-        if (isPostOrder) {
-            const res = await fetchData.create("orders", { ...formData, status: "pending" });
-            if (res.status === "pending") {
-                alert("tạo đơn hàng thành công");
-            }
-            form.reset();
+        const selectedCustomer = customers.find((c) => c.id === formData.customerId);
+        const selectedProduct = products.find((p) => p.id === formData.productId);
+
+        if (!selectedCustomer) {
+            alert("Khách hàng không hợp lệ");
+            return;
         }
-        return;
+
+        if (!selectedProduct) {
+            alert("Sản phẩm không hợp lệ");
+            return;
+        }
+
+        const remaining = selectedProduct.remaining;
+
+        if (Number.isNaN(remaining) || remaining < 0) {
+            alert("Số lượng tồn kho của sản phẩm không hợp lệ");
+            return;
+        }
+
+        if (formData.amount > remaining) {
+            alert(`Số lượng vượt quá tồn kho. Chỉ còn ${remaining} sản phẩm.`);
+            return;
+        }
+
+        const isPostOrder = confirm(`
+                Bạn có muốn tạo đơn hàng này không?
+                Khách hàng: ${selectedCustomer.name}
+                Sản phẩm: ${selectedProduct.name}
+                Số lượng: ${formData.amount}
+                Tồn kho còn lại sau khi tạo: ${remaining - formData.amount}
+            `);
+
+        if (!isPostOrder) return;
+
+        const newOrder = await fetchData.create("orders", {
+            ...formData,
+            status: "pending",
+        });
+
+        const updatedProductPayload = {
+            categoryId: selectedProduct.category.id,
+            name: selectedProduct.name,
+            sku: selectedProduct.sku,
+            price: selectedProduct.price,
+            remaining: remaining - formData.amount,
+            imageId: "",
+            id: formData.productId,
+        };
+        console.log(updatedProductPayload);
+
+        const pro = await fetchData.update("products", { ...updatedProductPayload });
+
+        console.log(pro);
+        console.log(newOrder);
+
+        if (newOrder?.status === "pending") {
+            alert("Tạo đơn hàng thành công");
+        } else {
+            alert("Đã tạo đơn hàng");
+        }
+
+        selectedProduct.remaining = remaining - formData.amount;
+
+        form.reset();
     });
 
     return container;
