@@ -19,7 +19,7 @@ export async function home() {
             {
                 title: "Khách hàng",
                 dataIndex: "customer",
-                render: (value) => value.name,
+                render: (value) => `<strong>${value.name}</strong>`,
             },
             {
                 title: "Trạng thái",

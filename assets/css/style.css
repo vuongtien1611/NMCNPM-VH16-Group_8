@@ -47,9 +47,7 @@ em {
 
 b,
 strong {
-
-    font-weight: 700;
-
+    font-weight: 600;
 }
 
 * {
@@ -312,7 +310,6 @@ body {
 .table-container td {
     padding: 15px 20px;
     border-bottom: 1px solid #eee;
-
 }
 
 /* Customer Avatar & Info */

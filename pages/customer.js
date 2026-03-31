@@ -90,7 +90,9 @@ export async function customer() {
             {
                 title: "Tổng chi tiêu",
                 dataIndex: "totalSpending",
-                render: (value) => formatVND(value) || 0,
+                render: (_, row) => {
+                    const id = row.id;
+                },
             },
             {
                 title: "Thao tác",
