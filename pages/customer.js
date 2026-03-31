@@ -177,11 +177,9 @@ export async function customer() {
 
         createFilter({
             data: customers,
-
             searchFields: ["name", "email", "phone"],
-
             searchEl: searchInput,
-            selectEl: select,
+            filterEl: select,
 
             getFilterValue: (item, value) => {
                 if (value === "ALL") return true;

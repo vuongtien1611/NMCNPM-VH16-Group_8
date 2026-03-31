@@ -121,11 +121,12 @@ export async function product() {
             data: products,
             searchFields: ["name", "sku"],
             searchEl: searchInput,
-            selectEl: select,
+            filterEl: select,
             getFilterValue: (item, val) =>
                 val === "ALL"
                     ? true
-                    : item.category?.name?.toUpperCase() === val,
+                    : item.category?.name?.toUpperCase() ===
+                      getcategoriVN(val).toUpperCase(),
             render: (filteredData) => {
                 tableWrapper.innerHTML = "";
                 commonTable(tableWrapper, columns, filteredData);
