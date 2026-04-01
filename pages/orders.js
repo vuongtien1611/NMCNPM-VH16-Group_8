@@ -193,7 +193,7 @@ export async function order() {
       <div class="search-bar">
         <input type="text" placeholder="Tìm mã đơn, khách hàng, SĐT, sản phẩm...">
       </div>
-       <a href="#/order/create" class="btn-add"><i class="fas fa-plus"></i> Thêm đơn hàng mới</a>
+       <a href="#/orders/create" class="btn-add"><i class="fas fa-plus"></i> Thêm đơn hàng mới</a>
     </header>
     <div class="stats-wrapper"></div>
     <section class="table-container">

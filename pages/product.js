@@ -2,9 +2,14 @@ import { fetchData } from "../apis/api.js";
 import { createFilter } from "../components/filter.js";
 import { createSummary } from "../components/summary.js";
 import { commonTable } from "../components/table.js";
-import { createActionButtons, formatVND } from "../utils.js";
+import { createActionButtons, formatVND, getcategoriVN } from "../utils.js";
 
 export async function product() {
+    // const [customers, orders] = await Promise.all([
+    //     fetchData.get("customers"),
+    //     fetchData.get("orders"),
+    // ]);
+
     const container = document.createElement("div");
     container.innerHTML = `
         <header class="header">
@@ -38,7 +43,16 @@ export async function product() {
     const select = container.querySelector("#categoryFilter");
 
     async function loadAndRender() {
-        const products = await fetchData.get("products");
+        const [products, categorys] = await Promise.all([
+            fetchData.get("products"),
+            fetchData.get("categories"),
+        ]);
+
+        //     const [products, customers, orders] = await Promise.all([
+        //     fetchData.get("products"),
+        //     fetchData.get("customers"),
+        //     fetchData.get("orders"),
+        // ]);
 
         const columns = [
             {
@@ -66,6 +80,10 @@ export async function product() {
             {
                 title: "Tồn kho",
                 dataIndex: "remaining",
+                render: (value) =>
+                    value < 10
+                        ? `<strong style="color: var(--danger)">${value} (Cảnh báo)</strong>`
+                        : value,
             },
             {
                 title: "Thao tác",
@@ -81,14 +99,27 @@ export async function product() {
 
         commonTable(tableWrapper, columns, products);
 
+        const productL = products?.length;
+        const lowStock = products.reduce((sum, p) => (sum += p.remaining), 0);
+        const categoryL = categorys?.length;
+
         statsWrapper.innerHTML = "";
         const summaryEl = createSummary([
             {
                 title: "Tổng sản phẩm",
-                value: products?.length || 0,
+                value: productL || 0,
                 cardColor: "no-border-left",
             },
-            { title: "Danh mục", value: "4", cardColor: "no-border-left" },
+            {
+                title: "Sắp hết hàng",
+                value: lowStock,
+                cardColor: "no-border-left",
+            },
+            {
+                title: "Danh mục",
+                value: categoryL,
+                cardColor: "no-border-left",
+            },
         ]);
         statsWrapper.appendChild(summaryEl);
 
@@ -100,7 +131,7 @@ export async function product() {
             getFilterValue: (item, val) =>
                 val === "ALL"
                     ? true
-                    : item.category?.name?.toUpperCase() ===
+                    : item.category?.name.toUpperCase() ===
                       getcategoriVN(val).toUpperCase(),
             render: (filteredData) => {
                 tableWrapper.innerHTML = "";

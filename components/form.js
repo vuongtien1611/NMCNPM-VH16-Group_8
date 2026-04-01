@@ -92,7 +92,6 @@ export function createForm({
         if (!validate()) return;
 
         onSubmit && onSubmit({ ...state });
-        form.reset();
     });
 
     form.addEventListener("reset", (e) => {

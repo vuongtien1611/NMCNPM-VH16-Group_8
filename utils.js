@@ -170,3 +170,26 @@ export function createActionButtons({ id, endpoint, onSuccess }) {
     container.append(editBtn, deleteBtn);
     return container;
 }
+
+export function resetForm(formId) {
+    const form = document.querySelector(formId);
+
+    if (form.tagName !== "FORM") return;
+
+    let title = "";
+
+    if (formId === "#productForm") {
+        title = "sản phẩm";
+    } else if (formId === "#customerForm") {
+        title = "khách hàng";
+    } else if (formId === "#orderForm") {
+        title = "đơn hàng";
+    }
+
+    alert(`Chúc mừng bạn đã tạo thành công ${title}`);
+
+    const inputs = form.querySelectorAll("[name]");
+    return inputs.forEach((input) => {
+        input.value = "";
+    });
+}

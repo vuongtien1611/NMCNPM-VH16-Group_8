@@ -176,6 +176,7 @@ body {
 
 .header .filter-group {
     display: flex;
+    align-items: center;
     gap: 10px;
 }
 
@@ -267,6 +268,11 @@ body {
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
 }
 
+.table-container .table-wrapper {
+    max-height: 610px;
+    overflow-y: auto;
+}
+
 .table-container .tabs {
     display: flex;
     gap: 10px;
@@ -297,6 +303,11 @@ body {
 .table-container table {
     width: 100%;
     border-collapse: collapse;
+}
+
+.table-container thead {
+    position: sticky;
+    top: 0;
 }
 
 .table-container th {

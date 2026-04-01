@@ -20,7 +20,7 @@ const routes = {
     "/products/create": createProduct,
     "/products/edit/:id": createProduct,
     "/orders/create": createOrder,
-    "/orders/create/:id": createOrder,
+    "/orders/edit/:id": createOrder,
     "/customers/create": createCustomer,
     "/customers/edit/:id": createCustomer,
 };

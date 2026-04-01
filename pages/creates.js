@@ -3,6 +3,7 @@ import { createForm } from "../components/form.js";
 import {
     formatAndMaskPhone,
     formatVND,
+    resetForm,
     validateDataPayload,
 } from "../utils.js";
 
@@ -184,29 +185,25 @@ export async function createProduct(params = {}) {
                     },
                 );
                 try {
-                    let resposonsive;
+                    let response;
                     if (id) {
-                        resposonsive = await fetchData.update("products", {
+                        response = await fetchData.update("products", {
                             ...payload,
                             id,
                         });
                         window.location.hash = "/products";
                     } else {
-                        resposonsive = await fetchData.create(
-                            "products",
-                            payload,
-                        );
-
-                        window.location.hash = "/products/create";
+                        response = await fetchData.create("products", payload);
+                        resetForm("#productForm");
                     }
-                    if (!resposonsive) return;
+                    if (!response) return;
                 } catch (error) {
                     console.error(error);
                 }
             },
             onCancel: () => (window.location.hash = "/products"),
         });
-    });
+    }, 0);
     return container;
 }
 
@@ -238,7 +235,7 @@ export async function createOrder() {
                                 .join("")}
                         </select>
                     </div>
-    
+
                     <div class="form-group">
                         <label> Sản phẩm </label>
                          <select name="productId">
@@ -250,7 +247,7 @@ export async function createOrder() {
                                 .join("")}
                         </select>
                     </div>
-    
+
                     <div class="form-group">
                         <label>Số lượng</label>
                          <input name="amount" type="number" />
@@ -447,21 +444,18 @@ export async function createCustomer(params = {}) {
             ],
             onSubmit: async (values) => {
                 try {
-                    let resposonsive;
+                    let response;
                     if (id) {
-                        resposonsive = await fetchData.update("customers", {
+                        response = await fetchData.update("customers", {
                             ...values,
                             id,
                         });
                         window.location.hash = "/customers";
                     } else {
-                        resposonsive = await fetchData.create(
-                            "customers",
-                            values,
-                        );
-                        window.location.hash = "/customers/create";
+                        response = await fetchData.create("customers", values);
+                        resetForm("#customerForm");
                     }
-                    if (!resposonsive) return;
+                    if (response) return;
                 } catch (error) {
                     console.error(error);
                 }
@@ -649,7 +643,7 @@ export async function createCustomer(params = {}) {
 //                         window.location.hash = "/orders";
 //                     } else {
 //                         response = await fetchData.create("orders", values);
-//                         window.location.hash = "/orders/create";
+//                         resetForm("#orderForm");
 //                     }
 //                     if (response) {
 //                         const payload = validateDataPayload.product(
