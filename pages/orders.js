@@ -1,27 +1,9 @@
 import { fetchData } from "../apis/api.js";
 import { createSummary } from "../components/summary.js";
 import { commonTable } from "../components/table.js";
+import { getStatus, getStatusColor, formatVND, formatAndMaskPhone } from "../utils.js";
 
 // Order Page Cường
-const setStatus = (_, row) => {
-    const status = {
-        done: ["Hoàn thành", "completed"],
-        pending: ["Chờ xử lý", "pending"],
-        cancel: ["Đã hủy", "cancelled"],
-        cancelled: ["Đã hủy", "cancelled"],
-        delivering: ["Đang giao", "shipping"],
-    };
-
-    const current = status[row.status] || ["Không xác định", "unknown"];
-    return `<span class="badge ${current[1]}">${current[0]}</span>`;
-};
-
-const maskPhone = (phone) => {
-    const value = String(phone || "");
-    if (value.length <= 4) return "xxxx";
-    return `${value.slice(0, -4)}xxxx`;
-};
-
 const rerenderOrder = async (oldContainer) => {
     const app = document.querySelector("#app");
     if (!app) return;
@@ -42,13 +24,9 @@ const formatNumber = (value) => {
 
 const getSummaryList = (orders) => {
     const totalOrders = orders.length;
-    const pendingOrders = orders.filter(
-        (item) => item.status === "pending",
-    ).length;
+    const pendingOrders = orders.filter((item) => item.status === "pending").length;
     const doneOrders = orders.filter((item) => item.status === "done").length;
-    const cancelOrders = orders.filter(
-        (item) => item.status === "cancel" || item.status === "cancelled",
-    ).length;
+    const cancelOrders = orders.filter((item) => item.status === "cancel" || item.status === "cancelled").length;
 
     return [
         {
@@ -92,7 +70,7 @@ export async function order() {
             title: "Khách hàng",
             dataIndex: "customer",
             render: (_, row) =>
-                `<div><strong>${row.customer?.name || ""}</strong><br><small>${maskPhone(row.customer?.phone)}</small></div>`,
+                `<div><strong>${row.customer?.name || ""}</strong><br><small>${formatAndMaskPhone(row.customer?.phone)}</small></div>`,
         },
         {
             title: "Sản phẩm",
@@ -108,11 +86,17 @@ export async function order() {
         {
             title: "Tổng tiền",
             dataIndex: "payment",
+            render: (_, row) => {
+                return formatVND(row.payment);
+            },
         },
         {
             title: "Trạng thái",
             dataIndex: "status",
-            render: setStatus,
+            render: (_, row) => {
+                const value = row.status;
+                return `<span class="status ${getStatusColor(value)}">${getStatus(value).toUpperCase()}</span>`;
+            },
         },
         {
             title: "Thao Tác",
@@ -120,43 +104,25 @@ export async function order() {
             render: (value, row) => {
                 const fragment = document.createDocumentFragment();
 
-                if (row.status === "pending" || row.status === "delivering") {
-                    const editBtn = document.createElement("button");
-                    editBtn.className = "btn-action btn-icon edit";
-                    editBtn.innerHTML = `<i class="fas fa-check"></i>`;
+                const editBtn = document.createElement("button");
+                editBtn.className = "btn-action btn-icon edit";
+                editBtn.innerHTML = `<i class="fas fa-check"></i>`;
 
-                    editBtn.addEventListener("click", async () => {
-                        const isUpdate = confirm(
-                            "bạn muốn update tiến độ không?",
-                        );
-                        if (!isUpdate) return;
-
-                        const nextStatus =
-                            row.status === "pending" ? "delivering" : "done";
-
-                        editBtn.innerHTML =
-                            '<i class="fas fa-spinner fa-spin"></i>';
-                        editBtn.style.pointerEvents = "none";
-
-                        const res = await fetchData.update("orders", {
-                            id: row.id,
-                            customerId: row.customer?.id,
-                            productId: row.product?.id,
-                            amount: row.amount,
-                            status: nextStatus,
-                        });
-
-                        if (res) {
-                            const oldContainer = editBtn.closest(".order-page");
-                            await rerenderOrder(oldContainer);
-                        } else {
-                            editBtn.innerHTML = `<i class="fas fa-check"></i>`;
-                            editBtn.style.pointerEvents = "auto";
-                        }
-                    });
-
-                    fragment.append(editBtn);
-                }
+                editBtn.addEventListener("click", () => {
+                    currentOrder = row;
+                    modalDescription.textContent = `Đơn hàng #${row.id} - trạng thái hiện tại: ${getStatus(row.status)}`;
+                    statusSelect.value = row.status || "pending";
+                    quantityInput.value = row.amount ?? 1;
+                    if (row.status !== "pending") {
+                        quantityInput.disabled = true;
+                        quantityNote.textContent = "Chỉ có thể chỉnh số lượng khi đơn hàng đang ở trạng thái pending.";
+                    } else {
+                        quantityInput.disabled = false;
+                        quantityNote.textContent = "";
+                    }
+                    orderModal.classList.add("active");
+                });
+                fragment.append(editBtn);
 
                 const deleteBtn = document.createElement("button");
                 deleteBtn.className = "btn-action btn-icon delete";
@@ -165,8 +131,7 @@ export async function order() {
                 deleteBtn.addEventListener("click", async () => {
                     if (!confirm("Bạn có chắc muốn xóa?")) return;
 
-                    deleteBtn.innerHTML =
-                        '<i class="fas fa-spinner fa-spin"></i>';
+                    deleteBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
                     deleteBtn.style.pointerEvents = "none";
 
                     const res = await fetchData.delete("orders", value);
@@ -206,7 +171,30 @@ export async function order() {
         </div>
       </div>
       <div class="table-wrapper"></div>
-    </section>
+    </section>`;
+
+    // thêm vào phần sửa số lượng và trạng thái
+    container.innerHTML += `<div class="modal order-modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <div class="modal-card">
+        <h2 id="modalTitle" class="modal-title">Cập nhật trạng thái</h2>
+        <p class="modal-description"></p>
+        <label class="modal-label" for="statusSelect">Trạng thái mới</label>
+        <select id="statusSelect" class="status-select">
+          <option value="pending">Chờ xử lý</option>
+          <option value="delivering">Đang giao</option>
+          <option value="done">Đã xong</option>
+          <option value="cancel">Hủy</option>
+        </select>
+        <label class="modal-label" for="quantityInput">Số lượng</label>
+        <input id="quantityInput" class="quantity-input" type="number" min="1" />
+        <p class="modal-note"></p>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-cancel">Hủy</button>
+          <button type="button" class="btn btn-save">Lưu</button>
+        </div>
+      </div>
+    </div>
+
   `;
 
     const tableWrapper = container.querySelector(".table-wrapper");
@@ -214,7 +202,16 @@ export async function order() {
     const searchInput = container.querySelector(".search-bar input");
     const tabs = container.querySelectorAll(".tab");
 
+    const orderModal = container.querySelector(".order-modal");
+    const modalDescription = container.querySelector(".modal-description");
+    const statusSelect = container.querySelector("#statusSelect");
+    const quantityInput = container.querySelector("#quantityInput");
+    const quantityNote = container.querySelector(".modal-note");
+    const btnModalCancel = container.querySelector(".btn-cancel");
+    const btnModalSave = container.querySelector(".btn-save");
+
     let activeStatus = "all";
+    let currentOrder = null;
 
     const normalize = (value) =>
         String(value || "")
@@ -225,18 +222,9 @@ export async function order() {
         const keyword = normalize(searchInput.value);
 
         return orders.filter((row) => {
-            const matchStatus =
-                activeStatus === "all" ? true : row.status === activeStatus;
+            const matchStatus = activeStatus === "all" ? true : row.status === activeStatus;
 
-            const searchText = [
-                row.id,
-                row.customer?.name,
-                row.customer?.phone,
-                row.product?.name,
-                row.status,
-            ]
-                .map(normalize)
-                .join(" ");
+            const searchText = [row.id, row.customer?.name, row.customer?.phone, row.product?.name, row.status].map(normalize).join(" ");
 
             const matchKeyword = !keyword || searchText.includes(keyword);
 
@@ -269,6 +257,90 @@ export async function order() {
 
     searchInput.addEventListener("input", () => {
         renderTable();
+    });
+
+    const closeModal = () => {
+        currentOrder = null;
+        orderModal.classList.remove("active");
+    };
+
+    btnModalCancel.addEventListener("click", () => {
+        closeModal();
+    });
+
+    btnModalSave.addEventListener("click", async () => {
+        if (!currentOrder) return;
+
+        const nextStatus = statusSelect.value;
+        const previousAmount = Number(currentOrder.amount) || 0;
+        const requestedAmount = Number(quantityInput.value) || previousAmount;
+        const isPending = currentOrder.status === "pending";
+
+        if (isPending) {
+            if (requestedAmount <= 0) {
+                alert("Số lượng phải lớn hơn 0");
+                return;
+            }
+
+            const remaining = Number(currentOrder.product?.remaining || 0);
+            const difference = requestedAmount - previousAmount;
+            if (difference > remaining) {
+                alert(`Số lượng vượt quá tồn kho. Chỉ còn ${remaining} sản phẩm.`);
+                return;
+            }
+        }
+
+        if (!nextStatus || (nextStatus === currentOrder.status && requestedAmount === previousAmount)) {
+            return closeModal();
+        }
+
+        btnModalSave.disabled = true;
+        btnModalSave.textContent = "Đang lưu...";
+
+        const orderPayload = {
+            id: currentOrder.id,
+            customerId: currentOrder.customer?.id,
+            productId: currentOrder.product?.id,
+            amount: requestedAmount,
+            status: nextStatus,
+        };
+
+        const orderResult = await fetchData.update("orders", orderPayload);
+
+        if (!orderResult) {
+            btnModalSave.disabled = false;
+            btnModalSave.textContent = "Lưu";
+            return;
+        }
+
+        if (isPending && requestedAmount !== previousAmount) {
+            const product = currentOrder.product || {};
+            const remaining = Number(product.remaining || 0);
+            const updatedProductPayload = {
+                categoryId: product.category?.id || 0,
+                name: product.name,
+                sku: product.sku || "",
+                price: product.price,
+                remaining: remaining - (requestedAmount - previousAmount),
+                imageId: product.imageId || "",
+                id: product.id,
+            };
+
+            const productResult = await fetchData.update("products", updatedProductPayload);
+            if (!productResult) {
+                alert("Cập nhật số lượng sản phẩm thất bại. Vui lòng thử lại.");
+                btnModalSave.disabled = false;
+                btnModalSave.textContent = "Lưu";
+                return;
+            }
+        }
+
+        btnModalSave.disabled = false;
+        btnModalSave.textContent = "Lưu";
+        closeModal();
+
+        const oldContainer = container;
+        await rerenderOrder(oldContainer);
     });
 
     renderSummary();
