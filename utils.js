@@ -80,6 +80,28 @@ export function formatVND(price) {
     return Number(price).toLocaleString("vi-VN") + "đ";
 }
 
+// Create and customer (Huy and Hieu)
+// export function formatDate(date) {
+//     const year = date.getFullYear();
+//     const month = String(date.getMonth() + 1).padStart(2, "0");
+//     const day = String(date.getDate()).padStart(2, "0");
+
+//     return `${year}-${month}-${day}`;
+// }
+
+// export function formatDay(dateValue) {
+//     if (!dateValue) return "";
+
+//     const dateObj = new Date(dateValue);
+
+//     return new Intl.DateTimeFormat("vi-VN", {
+//         month: "2-digit",
+//         day: "2-digit",
+//     })
+//         .format(dateObj)
+//         .replace("-", "/");
+// }
+
 export const validateDataPayload = {
     product: (categoryId, name, option = {}) => {
         const options = { ...option };
@@ -193,3 +215,104 @@ export function resetForm(formId) {
         input.value = "";
     });
 }
+
+// Create and customer (Huy and Hieu)
+// export function getBestSellerAll(orders) {
+//     if (!orders || !Array.isArray(orders)) return [];
+
+//     const salesMap = orders
+//         .filter((order) => order.status === "done")
+//         .reduce((acc, order) => {
+//             const productId = order.product?.id;
+
+//             if (!productId) return acc;
+
+//             if (!acc[productId]) {
+//                 acc[productId] = {
+//                     info: order.product,
+//                     totalSold: 0,
+//                 };
+//             }
+
+//             acc[productId].totalSold += Number(order.amount) || 0;
+
+//             return acc;
+//         }, {});
+
+//     const sortedSales = Object.values(salesMap).sort(
+//         (a, b) => b.totalSold - a.totalSold,
+//     );
+
+//     return sortedSales;
+// }
+
+// export function getPrevPeriod(startDate, endDate) {
+//     const start = new Date(startDate);
+//     const end = new Date(endDate);
+//     const diff = end.getTime() - start.getTime();
+
+//     const prevEnd = new Date(start.getTime() - 1);
+//     const prevStart = new Date(prevEnd.getTime() - diff);
+
+//     return {
+//         prevStart: formatDate(prevStart),
+//         prevEnd: formatDate(prevEnd),
+//     };
+// }
+
+// export function calcTrend(current, previous) {
+//     if (previous === 0) return { value: current > 0 ? 100 : 0, up: true };
+//     const percent = ((current - previous) / previous) * 100;
+//     return {
+//         value: Math.abs(Math.round(percent)),
+//         up: percent >= 0,
+//     };
+// }
+
+// export function calcMetrics(data, manualRate = 0.3) {
+//     return data.reduce(
+//         (acc, order) => {
+//             if (order.status === "done") {
+//                 const price = Number(order.product.price) || 0;
+//                 const amount = Number(order.amount) || 0;
+//                 const importPrice = order.product.importPrice;
+//                 const revenue = price * amount;
+
+//                 let profit = 0;
+//                 if (
+//                     importPrice !== undefined &&
+//                     importPrice !== null &&
+//                     importPrice !== 0
+//                 ) {
+//                     profit = (price - Number(importPrice)) * amount;
+//                 } else {
+//                     profit = revenue * manualRate;
+//                 }
+
+//                 acc.revenue += revenue;
+//                 acc.profit += profit;
+//                 acc.count += 1;
+//             }
+//             return acc;
+//         },
+//         { revenue: 0, profit: 0, count: 0 },
+//     );
+// }
+
+// export function calcNewCus(currentDate, startDate, orders) {
+//     const currentCus = currentDate.map((order) => order.customer?.id);
+
+//     const uniqueCus = currentCus.filter((id, index) => {
+//         return id && currentCus.indexOf(id) === index;
+//     });
+
+//     const newCus = uniqueCus.filter((cusId) => {
+//         const buyBefore = orders.some(
+//             (order) => order.customer?.id === cusId && order.date < startDate,
+//         );
+
+//         return !buyBefore;
+//     });
+
+//     return newCus.length;
+// }
