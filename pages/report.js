@@ -1,3 +1,4 @@
+// Create report (Huy)
 import { fetchData } from "../apis/api.js";
 
 // HELPERS
@@ -434,3 +435,228 @@ export async function report() {
 
     return container;
 }
+
+// Create and custom (Huy and Hieu)
+// import { fetchData } from "../apis/api.js";
+// import { renderChart } from "../components/chart.js";
+// import { createSummary } from "../components/summary.js";
+// import { commonTable } from "../components/table.js";
+// import {
+//     calcMetrics,
+//     calcNewCus,
+//     calcTrend,
+//     formatDate,
+//     formatDay,
+//     formatVND,
+//     getBestSellerAll,
+//     getPrevPeriod,
+// } from "../utils.js";
+
+// export async function report() {
+//     async function handleFilter(orders) {
+//         const startDate = document.querySelector("#startDate").value;
+//         const endDate = document.querySelector("#endDate").value;
+
+//         const { prevStart, prevEnd } = getPrevPeriod(startDate, endDate);
+
+//         const currentData = orders.filter(
+//             (item) => item.date >= startDate && item.date <= endDate,
+//         );
+//         const prevData = orders.filter(
+//             (item) => item.date >= prevStart && item.date <= prevEnd,
+//         );
+
+//         const currMetrics = calcMetrics(currentData);
+//         const prevMetrics = calcMetrics(prevData);
+
+//         const currNewCus = calcNewCus(currentData, startDate, orders);
+//         const prevNewCus = calcNewCus(prevData, startDate, orders);
+
+//         // Summary
+//         const revTrend = calcTrend(currMetrics.revenue, prevMetrics.revenue);
+//         const profitTrend = calcTrend(currMetrics.profit, prevMetrics.profit);
+//         const orderTrend = calcTrend(currMetrics.count, prevMetrics.count);
+//         const customerTrend = calcTrend(currNewCus, prevNewCus);
+
+//         const summaryEl = createSummary([
+//             {
+//                 title: "Doanh thu",
+//                 value: formatVND(currMetrics.revenue),
+//                 cardColor: "no-border-left",
+//                 trend: {
+//                     trendValue: `${revTrend.value}%`,
+//                     isTrendUp: revTrend.up,
+//                 },
+//             },
+//             {
+//                 title: "Đơn hàng",
+//                 value: currMetrics.count,
+//                 cardColor: "no-border-left",
+//                 trend: {
+//                     trendValue: `${orderTrend.value}%`,
+//                     isTrendUp: orderTrend.up,
+//                 },
+//             },
+//             {
+//                 title: "Lợi nhuận",
+//                 value: formatVND(currMetrics.profit),
+//                 cardColor: "no-border-left",
+//                 trend: {
+//                     trendValue: `${profitTrend.value}%`,
+//                     isTrendUp: profitTrend.up,
+//                 },
+//             },
+//             {
+//                 title: "Khách mới",
+//                 value: currNewCus,
+//                 cardColor: "no-border-left",
+//                 trend: {
+//                     trendValue: `${customerTrend.value}%`,
+//                     isTrendUp: customerTrend.up,
+//                 },
+//             },
+//         ]);
+//         statsWrapper.appendChild(summaryEl);
+
+//         // Table
+//         const bestSekkerData = getBestSellerAll(currentData);
+//         const columns = [
+//             {
+//                 title: "Sản phẩm",
+//                 dataIndex: "info",
+//                 render: (value) => `<strong>${value?.name}</strong>`,
+//             },
+//             {
+//                 title: "Số lượng bán",
+//                 dataIndex: "totalSold",
+//             },
+//             {
+//                 title: "Doanh thu",
+//                 dataIndex: "info",
+//                 render: (value, row) => {
+//                     const revenue = (value?.price || 0) * (row.totalSold || 0);
+//                     return formatVND(revenue);
+//                 },
+//             },
+//             {
+//                 title: "Tình trạng",
+//                 render: (_, row) => {
+//                     const remaining = row.info.remaining || 0;
+//                     if (remaining <= 0) {
+//                         return `<span style="color: var(--danger)">Hết hàng</span>`;
+//                     } else if (remaining < 10) {
+//                         return `<span style="color: var(--danger)">Sắp hết (${remaining})</span>`;
+//                     }
+//                     return `<span style="color: var(--success)">Còn hàng</span>`;
+//                 },
+//             },
+//         ];
+
+//         commonTable(tableWrapper, columns, bestSekkerData);
+
+//         const revenueByDate = currentData.reduce((acc, curr) => {
+//             acc[curr.date] =
+//                 (acc[curr.date] || 0) +
+//                 (Number(curr.product?.price * curr.amount) || 0);
+//             return acc;
+//         }, {});
+
+//         const labels = Object.keys(revenueByDate).sort();
+//         const customLabels = labels.map((day) => formatDay(day));
+
+//         const dataValues = labels.map((label) => revenueByDate[label]);
+
+//         renderChart("revenueChart", "line", customLabels, dataValues, {
+//             datasetLabel: "Doanh thu (VNĐ)",
+//             backgroundColor: "rgba(52, 152, 219, 0.1)",
+//             borderColor: "#3498db",
+//             fill: true,
+//             tension: 0.4,
+//         });
+
+//         const categoryMap = currentData.reduce((acc, curr) => {
+//             const cat = curr.product?.category || "Khác";
+
+//             if (curr.status === "done") {
+//                 acc[cat.name] = (acc[cat.name] || 0) + 1;
+//             }
+//             return acc;
+//         }, {});
+
+//         renderChart(
+//             "categoryChart",
+//             "doughnut",
+//             Object.keys(categoryMap),
+//             Object.values(categoryMap),
+//             {
+//                 backgroundColor: ["#3498db", "#2ecc71", "#f1c40f"],
+//                 showLegend: true,
+//             },
+//         );
+//     }
+
+//     const container = document.createElement("div");
+//     container.innerHTML = `
+//         <header class="header">
+//             <h2>Báo cáo kinh doanh</h2>
+//             <div class="filter-group">
+//                 <span>Từ</span>
+//                 <input type="date" id="startDate">
+//                 <span>đến</span>
+//                 <input type="date" id="endDate">
+//                 <button id="btnFilter" style="padding: 8px 15px; background: var(--primary-color); color: white; border: none; border-radius: 5px; cursor: pointer;">Lọc</button>
+//             </div>
+//         </header>
+//         <div class="stats-wrapper"></div>
+//         <div class="charts-container">
+//             <div class="chart-box">
+//                 <h3>Biểu đồ doanh thu 7 ngày gần nhất</h3>
+//                 <canvas id="revenueChart" width="369" height="184" style="display: block; box-sizing: border-box; height: 184.5px; width: 369px;"></canvas>
+//             </div>
+//             <div class="chart-box">
+//                 <h3>Cơ cấu sản phẩm</h3>
+//                 <canvas id="categoryChart" width="300" height="300" style="display: block; box-sizing: border-box; height: 300px; width: 300px;"></canvas>
+//             </div>
+//         </div>
+//         <section class="table-container">
+//             <div class="table-header">
+//                 <h3>Sản phẩm bán chạy nhất</h3>
+//             </div>
+//             <div class="table-wrapper"></div>
+//         </section>
+//     `;
+
+//     const tableWrapper = container.querySelector(".table-wrapper");
+//     const statsWrapper = container.querySelector(".stats-wrapper");
+//     const startDateEl = container.querySelector("#startDate");
+//     const endDateEl = container.querySelector("#endDate");
+//     const btnFilter = container.querySelector("#btnFilter");
+
+//     // set input date default value
+//     const today = new Date();
+//     const sevenDaysAgo = new Date();
+//     sevenDaysAgo.setDate(today.getDate() - 7);
+
+//     const defaultEnd = formatDate(today);
+//     const defaultStart = formatDate(sevenDaysAgo);
+
+//     endDateEl.value = defaultEnd;
+//     startDateEl.value = defaultStart;
+
+//     async function loadAndRender() {
+//         const orders = await fetchData.get("orders");
+
+//         btnFilter.addEventListener("click", () => {
+//             statsWrapper.innerHTML = "";
+//             tableWrapper.innerHTML = "";
+
+//             handleFilter(orders);
+//         });
+
+//         setTimeout(() => handleFilter(orders), 0);
+//     }
+
+//     await loadAndRender();
+
+//     return container;
+// }

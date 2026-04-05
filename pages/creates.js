@@ -100,14 +100,6 @@ export async function createProduct(params = {}) {
                                 <select name="categoryId" id="categorySelect" style="flex: 1;">
                                     <option value="">Chọn danh mục</option>
                                     ${categories
-                                        .filter((cat) =>
-                                            [
-                                                "Máy tính",
-                                                "Điện thoại",
-                                                "Máy tính bảng",
-                                                "Phụ kiện",
-                                            ].includes(cat.name),
-                                        )
                                         .map(
                                             (cat) =>
                                                 `<option value="${cat.id}">${cat.name}</option>`,
@@ -449,12 +441,11 @@ export async function createCustomer(params = {}) {
                             ...values,
                             id,
                         });
-                        window.location.hash = "/customers";
                     } else {
                         response = await fetchData.create("customers", values);
-                        resetForm("#customerForm");
                     }
-                    if (response) return;
+                    if (!response) return;
+                    window.location.hash = "/customers";
                 } catch (error) {
                     console.error(error);
                 }
