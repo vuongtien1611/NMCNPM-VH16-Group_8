@@ -106,7 +106,7 @@ export async function order() {
 
                 const editBtn = document.createElement("button");
                 editBtn.className = "btn-action btn-icon edit";
-                editBtn.innerHTML = `<i class="fas fa-check"></i>`;
+                editBtn.innerHTML = `<i class="fas fa-edit"></i>`;
 
                 editBtn.addEventListener("click", () => {
                     currentOrder = row;
