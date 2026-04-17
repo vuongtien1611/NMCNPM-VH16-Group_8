@@ -1,18 +1,8 @@
-<<<<<<< HEAD
-# K18_JS_Group5
-# 🛒 ShopAdmin – Hệ Thống Quản Lý Bán Hàng (JavaScript Thuần - K18)
+# NMCNPM_VH16_Group8
+**ShopAdmin – Hệ Thống Quản Trị TMĐT (Group 8)**
 
-## 📌 Giới thiệu
-
-**ShopAdmin** là dự án xây dựng hệ thống quản lý bán hàng sử dụng JavaScript thuần (Vanilla JS), không sử dụng framework.
-
-Dự án được thực hiện bởi sinh viên K18 nhằm mục tiêu:
-- Thực hành thao tác DOM
-- Xây dựng CRUD bằng JavaScript thuần
-- Quản lý dữ liệu với LocalStorage
-- Xây dựng giao diện Admin Dashboard thực tế
-
----
+📌 Giới thiệu dự án
+ShopAdmin là hệ thống quản trị thương mại điện tử được phát triển bởi Group 8 (VH16). Hệ thống cung cấp giải pháp quản lý toàn diện cho cửa hàng, tích hợp API bảo mật thực hiện CRUD thời gian thực trên sản phẩm, đơn hàng và khách hàng.
 
 ## 🚀 Tính năng chính
 
@@ -60,7 +50,3 @@ Dự án được thực hiện bởi sinh viên K18 nhằm mục tiêu:
 - Chart.js
 
 ---
-=======
-# NMCNPM-VH16-Group_8
-Dashboard quản trị TMĐT hiện đại, tích hợp API bảo mật thực hiện CRUD thời gian thực trên sản phẩm, đơn hàng và khách hàng. Hệ thống trực quan hóa hiệu suất bán hàng qua biểu đồ động, cung cấp báo cáo chi tiết về xu hướng doanh thu và sản phẩm bán chạy, hỗ trợ tối ưu hóa quản lý cửa hàng hiệu quả.
->>>>>>> dc17fe33cd0c57d6ac34ce4557b7cd1887c5afcb
