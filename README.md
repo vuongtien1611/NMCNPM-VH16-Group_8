@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # K18_JS_Group5
 # 🛒 ShopAdmin – Hệ Thống Quản Lý Bán Hàng (JavaScript Thuần - K18)
 
@@ -59,3 +60,7 @@ Dự án được thực hiện bởi sinh viên K18 nhằm mục tiêu:
 - Chart.js
 
 ---
+=======
+# NMCNPM-VH16-Group_8
+Dashboard quản trị TMĐT hiện đại, tích hợp API bảo mật thực hiện CRUD thời gian thực trên sản phẩm, đơn hàng và khách hàng. Hệ thống trực quan hóa hiệu suất bán hàng qua biểu đồ động, cung cấp báo cáo chi tiết về xu hướng doanh thu và sản phẩm bán chạy, hỗ trợ tối ưu hóa quản lý cửa hàng hiệu quả.
+>>>>>>> dc17fe33cd0c57d6ac34ce4557b7cd1887c5afcb
